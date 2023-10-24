@@ -1,0 +1,37 @@
+version: '3.8'
+services:
+
+  web:
+    container_name: heyot_web
+    image: heyot_web
+    build:
+      context: ./heyot
+      dockerfile: ./dockerfiles/Dockerfile.dev
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - ./heyot:/home/heyot/web
+      - ./heyot/neural_networks/ai_models:/home/heyot/web/neural_networks/ai_models
+    restart: always
+    ports:
+      - 8000:8000
+
+  mosquitto:
+      container_name: heyot_mosquitto
+      image: heyot_mosquitto
+      build:
+        context: ./mosquitto
+        dockerfile: ./dockerfiles/Dockerfile
+      hostname: mosquitto_broker
+      volumes:
+        - ./mosquitto/conf:/mosquitto/config
+        - ./mosquitto/log:/mosquitto/log
+        - ./mosquitto/data:/mosquitto/data
+      restart: always
+      ports:
+          - 1883:1883
+          - 5353:5353
+      networks:
+        - mosquitto
+networks:
+  mosquitto:
+    name: mosquitto
