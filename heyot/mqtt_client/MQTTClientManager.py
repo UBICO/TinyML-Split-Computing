@@ -39,7 +39,7 @@ class MQTTClientManager:
         self.time_offset        = None
 
         self.db_manager         = DBManager()
-        self.offloading_manager = OffloadingManager()
+        self.offloading_manager = None
         self.nn_manager         = None 
         self.nn_id              = None
         self.nn_analytics_path  = None
@@ -103,13 +103,13 @@ class MQTTClientManager:
             synt_load_edge = 1.7 
             inference_time_edge = [x/synt_load_edge for x in inference_time_device]
             # Run offloading algorithm
-            best_layer, _, offloaded_layer_data_size, layer_zero_data_size = self.offloading_manager.static_offloading_evaluation(
-                avg_speed=avg_speed, 
+            self.offloading_manager = OffloadingManager(avg_speed=avg_speed, 
                 num_layers=len(analytics_data)-1, 
                 layers_sizes=analytics_data["Size (bits)"].tolist(),
                 inference_time_edge=inference_time_edge, 
                 inference_time_device=inference_time_device
             )
+            best_layer, _, offloaded_layer_data_size, layer_zero_data_size = self.offloading_manager.static_offloading_evaluation()
             # Publish Prediction
             self.publish_message(topic='comunication/edge/nn_offloading', message=json.dumps({"layer": best_layer})) 
             # Store Test Information

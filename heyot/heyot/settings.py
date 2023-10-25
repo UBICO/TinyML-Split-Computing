@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'mqtt_client',
     'neural_networks',
     'database_manager',
+    'web_app'
 ]
 
 MIDDLEWARE = [
@@ -60,7 +61,9 @@ ROOT_URLCONF = 'heyot.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [
+            BASE_DIR / 'templates', os.path.join(os.path.join(BASE_DIR, 'templates'), ''),
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

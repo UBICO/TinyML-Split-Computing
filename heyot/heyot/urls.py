@@ -24,13 +24,9 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('mqtt_client.urls')),
     path('', include('neural_networks.urls')),
-    path('', include('offload_monitor.urls')),
+    #path('', include('offload_monitor.urls')),
     path('', include('database_manager.urls')),
     path('', include('web_app.urls')),
-]
-
-urlpatterns = [
-    path('admin/', admin.site.urls),
 ]
 
 
