@@ -36,4 +36,4 @@ RUN mkdir -p $WORK_DIR/logs
 RUN touch $WORK_DIR/logs/api.log
 
 # Run entrypoint.dev.sh, which is a shell script for starting the development environment
-ENTRYPOINT ["sh", "./entrypoints/entrypoint.sh"]
+ENTRYPOINT ["sh", "./entrypoints/entrypoint.dev.sh"]
