@@ -1,3 +1,4 @@
-from django.test import TestCase
+from django.contrib import admin
+from .models import TestData
 
-# Create your tests here.
+admin.site.register(TestData)

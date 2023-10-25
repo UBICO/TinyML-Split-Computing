@@ -1,23 +1,26 @@
 version: '3.8'
 services:
-
+######################################################################################
   web:
-    container_name: heyot_web
-    image: heyot_web
+    container_name: ${DJANGO_PROJECT_NAME}_web
+    image: ${DJANGO_PROJECT_NAME}_web
     build:
-      context: ./heyot
+      context: ./${DJANGO_PROJECT_NAME}
       dockerfile: ./dockerfiles/Dockerfile.dev
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
-      - ./heyot:/home/heyot/web
-      - ./heyot/neural_networks/ai_models:/home/heyot/web/neural_networks/ai_models
+      - ./${DJANGO_PROJECT_NAME}:/home/heyot/web
+      - ./${DJANGO_PROJECT_NAME}/neural_networks/ai_models:/home/heyot/web/neural_networks/ai_models
+      - log_data:/home/${DJANGO_PROJECT_NAME}/web/logs
     restart: always
     ports:
       - 8000:8000
-
+    env_file:
+      - ./environment/.env.dev
+######################################################################################
   mosquitto:
-      container_name: heyot_mosquitto
-      image: heyot_mosquitto
+      container_name: ${DJANGO_PROJECT_NAME}_mosquitto
+      image: h${DJANGO_PROJECT_NAME}_mosquitto
       build:
         context: ./mosquitto
         dockerfile: ./dockerfiles/Dockerfile
@@ -32,6 +35,22 @@ services:
           - 5353:5353
       networks:
         - mosquitto
+######################################################################################
+  postgre_db:
+    container_name: ${DJANGO_PROJECT_NAME}_postgre_db
+    image: ${DJANGO_PROJECT_NAME}_postgre_db
+    build:
+      context: ./postgre_db
+      dockerfile: ./Dockerfile
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    env_file:
+      - ./environment/.env.dev
+######################################################################################
 networks:
   mosquitto:
     name: mosquitto
+######################################################################################
+volumes:
+  postgres_data:
+  log_data:

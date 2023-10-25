@@ -4,8 +4,9 @@ heyot_venv
 mosquitto/conf/*
 mosquitto/data/*
 mosquitto/log/*
-
 migrations/*
+
+environment/.env
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
