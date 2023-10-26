@@ -13,7 +13,6 @@ def start_mqtt_client(request):
         notification = "MQTT Client started."
     else:
         notification = "MQTT Client is already running."
-    #mqtt_manager.publish_analytics()
     return render(request, 'heyot/mqtt_client_menager/mqtt_client.html', {'notification': notification})
 
 def stop_mqtt_client(request):

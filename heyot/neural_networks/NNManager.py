@@ -1,20 +1,21 @@
 import tensorflow as tf
 import time
-# import pandas as pd
+import pandas as pd
 import logging
 
 logger = logging.getLogger(__name__)
 
 class NNManager:
-    def __init__(self, nn_id, start_layer_index, data, tflite_model_path):
+    def __init__(self, nn_id):
         self.nn_id = nn_id
-        self.start_layer_index = start_layer_index
-        self.data = data
+        self.start_layer_index = None
+        self.data = None
         self.update_time = None
         self.model_loading_time = None
         self.model = None
         self.layer_outputs = []
-        self.tflite_model_path = tflite_model_path
+        self.analytics_data = None
+        
 
     def update_csv_file(self, layer_id: int, new_inference_time: float) -> None: 
         """
@@ -36,21 +37,30 @@ class NNManager:
     def load_model(self):
         logger.info(f"Loading  Neural Network [{self.nn_id}]")
         start_time = time.time()  # Initialize the total time
-        self.model = tf.keras.models.load_model(self.tflite_model_path)
+        try:
+            self.model = tf.keras.models.load_model(self.get_tflite_model_path())
+        except Exception as e:
+            logger.error(f"Can't Load the model for nn with id: {self.nn_id} at path: {self.get_tflite_model_path()}")
+            logger.error(f"Error:{e}")
+
+            
         end_time = time.time() # Measure the end time and tot time
         self.model_loading_time = end_time - start_time
         
-    def set_input_data(input_shape):
-        pass
+    def set_input_data(self, layer_input_shape, layer_data):
+        return layer_data
 
-    def predic_single_layer(self, layer_id):
+    def predic_single_layer(self, layer_id, layer_data):
         layer =  self.model.layers[layer_id] 
-        self.set_input_data(input_shape = layer.input_shape[1:])
+        input_data = self.set_input_data(layer_input_shape=layer.input_shape[1:], layer_data=layer_data)
         # Create an intermediate model with the current layer
         intermediate_model = tf.keras.Model(inputs= self.model.input, outputs=layer.output)
         # Predict using the current layer keeps track of the time it takes
         start_predict = time.time_ns() / 1_000_000_000
-        layer_output = intermediate_model.predict(self.input_data)
+        try:
+            layer_output = intermediate_model.predict(input_data)
+        except Exception as e:
+            logger.error(f"Can't Predict Layer: {layer_id}")
         end_predict = time.time_ns() / 1_000_000_000
         single_layer_predict_time = (end_predict - start_predict)
         # Updates the analytics of the model with the new inference time
@@ -58,11 +68,21 @@ class NNManager:
         # Append the layer name and output to the layer_outputs list
         self.layer_outputs.append({"name": layer.name, "output": str(layer_output.tolist())})
 
-    def perform_predict(self):
-        logger.info(f"Prediction with Neural Network [{self.nn_id}] from layer [{self.start_layer_index}]")
-        self.load_model()                       # Load the model
-        start_layer_index = start_layer_index   # Specify the starting layer (0-based index)
-        num_layers = len( self.model.layers) -1 # The output layer needs to be discarded
+    def perform_predict(self, start_layer_index, data):
+        logger.info(f"Prediction with Neural Network [{self.nn_id}] from layer [{start_layer_index}]")
+        self.data = data
+        self.load_model()                           # Load the model
+        self.start_layer_index = start_layer_index   # Specify the starting layer (0-based index)
+        num_layers = len(self.model.layers) -1 # The output layer needs to be discarded
         # Iterate through the layers starting from the specified index
-        [self.predic_single_layer(self, layer_id) for layer_id in range(start_layer_index, num_layers)] 
+        [self.predic_single_layer(layer_id, layer_data=data) for layer_id in range(start_layer_index, num_layers)] 
         return self.layer_outputs, self.model_loading_time, self.update_time
+    
+    def get_tflite_model_path(self) ->str:
+        return f'./neural_networks/ai_models/{self.nn_id}/{self.nn_id}.h5'
+
+    def get_model_analytics(self) -> pd.DataFrame:
+        self.nn_analytics_path  = f'./neural_networks/ai_models/{self.nn_id}/{self.nn_id}_analytics.csv'
+        self.analytics_data = pd.read_csv(self.nn_analytics_path)
+        return self.analytics_data 
+    

@@ -11,7 +11,7 @@ services:
     volumes:
       - ./${DJANGO_PROJECT_NAME}:/home/heyot/web
       - ./${DJANGO_PROJECT_NAME}/neural_networks/ai_models:/home/heyot/web/neural_networks/ai_models
-      - log_data:/home/${DJANGO_PROJECT_NAME}/web/logs
+    # - log_data:/home/${DJANGO_PROJECT_NAME}/web/logs
     restart: always
     ports:
       - 8000:8000
@@ -53,4 +53,4 @@ networks:
 ######################################################################################
 volumes:
   postgres_data:
-  log_data:
+  #log_data:

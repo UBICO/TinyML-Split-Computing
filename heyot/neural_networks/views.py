@@ -1,19 +1,22 @@
 from django.http import JsonResponse
 import numpy as np
-#from .nn_manager import perform_predict
+from .NNManager import NNManager
 import pandas as pd
 from django.shortcuts import render
 
+
 def test(request, nn_id):
-    layer_outputs, total_predict_time, update_time = None, None, None #perform_predict(nn_id=nn_id, start_layer_index=0, data=np.random.rand(1,9))
-    csv_file_path = f"./neural_networks/ai_models/{nn_id}/{nn_id}_analytics.csv" 
-    analytics_data = pd.read_csv(csv_file_path)
-    last_inference_time = analytics_data['Inference Time (s)'].to_list()
+    start_layer_index = 0
+    # Predict
+    fake_data = np.random.rand(1, 9)
+    nn_manager = NNManager(nn_id=nn_id)
+    layer_outputs, model_loading_time, update_time = nn_manager.perform_predict(start_layer_index=start_layer_index, data=fake_data)
+    last_inference_time = nn_manager.get_model_analytics()["Inference Time (s)"]
     result = {
-        "total_predict_time(s)": str(total_predict_time),
+        "total_predict_time(ms)": sum(last_inference_time.to_list()),
         "layer_outputs" : layer_outputs,
         "update_time": update_time,
-        "last_inference_time": str(last_inference_time),
+        "last_inference_times(ms)": str(last_inference_time),
     }
     return JsonResponse(result, safe=False)
 

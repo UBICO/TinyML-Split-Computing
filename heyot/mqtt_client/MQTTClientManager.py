@@ -69,8 +69,8 @@ class MQTTClientManager:
         self.nn_id = message_data.get('nn', None)
         if self.nn_id is not None:
             self.nn_analytics_path  = f'./neural_networks/ai_models/{self.nn_id}/{self.nn_id}_analytics.csv'
-            msg_latency, avg_speed = self.evaluate_latency_and_speed(message_data, payload_size_bits)
             analytics_data = pd.read_csv(self.nn_analytics_path)
+            msg_latency, avg_speed = self.evaluate_latency_and_speed(message_data, payload_size_bits)
         
         # Store Test Information   
         self.db_manager.store_test_data(
@@ -83,8 +83,8 @@ class MQTTClientManager:
             logger.info(f"Asked to compute from layer: {start_layer_index}")
             # Predict
             fake_data = np.random.rand(1, 9)
-            nn_manager = NNManager(nn_id=self.nn_id, start_layer_index=start_layer_index, data=fake_data, tflite_model_path=f'./neural_networks/ai_models/{self.nn_id}/{self.nn_id}_analytics.csv')
-            layer_outputs, model_loading_time, update_time = nn_manager.perform_predict()
+            nn_manager = NNManager(nn_id=self.nn_id)
+            layer_outputs, model_loading_time, update_time = nn_manager.perform_predict(start_layer_index=start_layer_index, data=fake_data)
             # Publish the prediction of each layer
             self.publish_message(topic='comunication/nn_prediction', message=json.dumps(layer_outputs)) 
             # Store Test Information
@@ -103,7 +103,8 @@ class MQTTClientManager:
             synt_load_edge = 1.7 
             inference_time_edge = [x/synt_load_edge for x in inference_time_device]
             # Run offloading algorithm
-            self.offloading_manager = OffloadingManager(avg_speed=avg_speed, 
+            self.offloading_manager = OffloadingManager(
+                avg_speed=avg_speed, 
                 num_layers=len(analytics_data)-1, 
                 layers_sizes=analytics_data["Size (bits)"].tolist(),
                 inference_time_edge=inference_time_edge, 
@@ -176,10 +177,3 @@ class MQTTClientManager:
                 logger.info(f"Error publishing message: {e}")
         else:
             logger.info("MQTT client is not initialized. Call 'run_mqtt_client' first.")
-
-    def publish_analytics(self):
-        analytics_data = pd.read_csv(self.nn_analytics_path)
-        for _, row in analytics_data.iterrows():    # Iterate through each row in the DataFrame
-            analytics_json = row.to_json()          # Convert the row to a JSON string
-            # Publish the JSON message to an MQTT topic
-            self.publish_message(topic='comunication/edge/nn_analytics', message=analytics_json) 
