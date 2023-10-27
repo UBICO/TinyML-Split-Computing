@@ -39,21 +39,11 @@ String nn = MODEL_NUMBER;
 
 /* 
 * ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-* GLOBAL VARIABLES CONFIGURATION
+*  CONFIGURATIONS
 * ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 */
-// Wi-Fi
-const char* SSID                = "your-username";
-const char* PWD                 = "your-pwd";
-// NTP Timer Configuration
-const char* NTP_SRV             = "0.it.pool.ntp.org";
-const long NTP_GMT_OFFSET       = 0;
-const int NTP_DAYLIGHT_OFFSET   = 0;
-// MQTT Conf
-const char* MQTT_SRV            = "your-host-name.local"; // .local is needed when using Hotspot so i will leave it by default
-const int MQTT_PORT             = 1883;
-const char* MQTT_USR            = ""; 
-const char* MQTT_PWD            = ""; 
+#include "conf.h"
+
 // NN CONF
 tflite::MicroErrorReporter micro_error_reporter;
 tflite::ErrorReporter* error_reporter = &micro_error_reporter;

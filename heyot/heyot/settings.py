@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     # Added Django Apps
+    'rest_framework',
     'offload_monitor',
     'mqtt_client',
     'neural_networks',

@@ -11,3 +11,4 @@ aiocoap==0.4.7
 pandas
 Django==3.2.8
 tensorflow
+djangorestframework==3.14.0

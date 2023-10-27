@@ -13,6 +13,7 @@ class OffloadingManager:
         self.layer_zero_data_size = self.layers_sizes[0]
 
     def evaluation(self, initial_cost, layer_data_size, edge_computation_costs, avg_speed):
+        logger.info("---------------------------------")
         logger.info(f"DS:           {layer_data_size}")
         logger.info(f"IC:           {initial_cost}")
         logger.info(f"CE:           {edge_computation_costs}")
@@ -27,7 +28,7 @@ class OffloadingManager:
         # Fast offloading - Edge Only Computation
         self.lowest_evaluation = self.evaluation(
             initial_cost=0,
-            layer_data_size=self.data_size[0],
+            layer_data_size=self.layers_sizes[0],
             avg_speed=round(self.avg_speed,3),
             edge_computation_costs=sum(self.inference_time_edge[:self.num_layers+1]),
         )
