@@ -14,15 +14,15 @@
  * NN Modles Layers
  * ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  */
-#define MODEL_NUMBER "04"
-#include "models/model_04_layer_0.h"
-#include "models/model_04_layer_1.h"
-#include "models/model_04_layer_2.h"
-#include "models/model_04_layer_3.h"
-#include "models/model_04_layer_4.h"
-#include "models/model_04_layer_5.h"
-#include "models/model_04_layer_6.h"
-#include "models/model_04_layer_7.h"
+#define MODEL_NUMBER "01"
+#include "models/model_01_layer_0.h"
+#include "models/model_01_layer_1.h"
+#include "models/model_01_layer_2.h"
+#include "models/model_01_layer_3.h"
+#include "models/model_01_layer_4.h"
+#include "models/model_01_layer_5.h"
+#include "models/model_01_layer_6.h"
+#include "models/model_01_layer_7.h"
 String nn = MODEL_NUMBER;
 
 /* 

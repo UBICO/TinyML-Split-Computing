@@ -67,3 +67,9 @@ form{
     transition: transform 125ms;
     transform: translateY(-5px);
 }
+
+.git-profile-link{
+    color:pink;
+    text-decoration: none;
+    font-weight: bold;
+}

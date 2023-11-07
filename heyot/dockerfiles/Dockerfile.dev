@@ -7,7 +7,7 @@
 FROM python:3.9
 
 # Set the work directory name
-ENV WORK_DIR=iot
+ENV WORK_DIR=$WORK_DIR
 ENV WORK_DIR=/home/$WORK_DIR/web
 
 # Set environment variables to configure Python behavior
@@ -36,4 +36,4 @@ RUN mkdir -p $WORK_DIR/logs
 RUN touch $WORK_DIR/logs/api.log
 
 # Run entrypoint.dev.sh, which is a shell script for starting the development environment
-ENTRYPOINT ["sh", "./entrypoints/entrypoint.dev.sh"]
+# ENTRYPOINT ["sh", "./entrypoints/entrypoint.dev.sh"]

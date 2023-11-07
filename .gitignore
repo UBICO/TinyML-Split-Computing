@@ -2,7 +2,6 @@
 esp32_board/nn_runner/src/conf.h
 heyot_venv
 
-mosquitto/conf/*
 mosquitto/data/*
 mosquitto/log/*
 migrations/*

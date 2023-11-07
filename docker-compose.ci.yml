@@ -9,10 +9,10 @@ services:
       dockerfile: ./dockerfiles/Dockerfile.dev
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
-      - ./${DJANGO_PROJECT_NAME}/templates:/home/heyot/web/templates
+      - ./${DJANGO_PROJECT_NAME}:/home/heyot/web
       - ./${DJANGO_PROJECT_NAME}/neural_networks/ai_models:/home/heyot/web/neural_networks/ai_models
       - ./${DJANGO_PROJECT_NAME}/exported_tests_csv:/home/heyot/web/exported_tests_csv
-      # - log_data:/home/${DJANGO_PROJECT_NAME}/web/logs
+    # - log_data:/home/${DJANGO_PROJECT_NAME}/web/logs
       - django_sqlite_data:/home/${DJANGO_PROJECT_NAME}/web/db.sqlite3
     ports:
       - 8000:8000
@@ -37,10 +37,22 @@ services:
       networks:
         - mosquitto
 ######################################################################################
+  postgre_db:
+    container_name: ${DJANGO_PROJECT_NAME}_postgre_db
+    image: ${DJANGO_PROJECT_NAME}_postgre_db
+    build:
+      context: ./postgre_db
+      dockerfile: ./Dockerfile
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    env_file:
+      - ./environment/.env.dev
+######################################################################################
 networks:
   mosquitto:
     name: mosquitto
 ######################################################################################
 volumes:
+  postgres_data:
   #log_data:
   django_sqlite_data:
