@@ -72,7 +72,6 @@ class MQTTClientManager:
         # Get the Neural Network id
         nn_id = message_data.get('nn', None)
 
-
         # Update the connected devices dictionary with the latest message timestamp
         device_id = nn_id
         if device_id:
@@ -84,7 +83,6 @@ class MQTTClientManager:
             else:
                 self.connected_devices[device_id]['last_message_time'] = time.time()
                 self.connected_devices[device_id]['total_message_count'] += 1
-
 
         if nn_id is not None:
             self.nn_analytics_path = f'./neural_networks/ai_models/{nn_id}/{nn_id}_analytics.csv'
