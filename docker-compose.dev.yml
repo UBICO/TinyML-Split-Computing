@@ -9,7 +9,6 @@ services:
       dockerfile: ./dockerfiles/Dockerfile.dev
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
-      - ./${DJANGO_PROJECT_NAME}/templates:/home/heyot/web/templates
       - ./${DJANGO_PROJECT_NAME}/neural_networks/ai_models:/home/heyot/web/neural_networks/ai_models
       - ./${DJANGO_PROJECT_NAME}/exported_tests_csv:/home/heyot/web/exported_tests_csv
       # - log_data:/home/${DJANGO_PROJECT_NAME}/web/logs
