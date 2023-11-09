@@ -45,7 +45,6 @@ class MQTTClientManager:
         self.nn_manager         = None 
 
         self.nn_info_dict       = {} # Dictionary to store information for different neural networks
-        self.nn_id              = None
         self.nn_analytics_path  = None
 
     def on_connect(self, client, userdata, flags, rc):
@@ -83,6 +82,15 @@ class MQTTClientManager:
             else:
                 self.connected_devices[device_id]['last_message_time'] = time.time()
                 self.connected_devices[device_id]['total_message_count'] += 1
+
+        # Store Test Information   
+        logger.info(f"##################################################################################################################")
+        logger.info(f"Message for: {nn_id}")
+        logger.info(f"##################################################################################################################")
+        self.db_manager.store_test_data(
+            message_uiid=message_data.get('messageUIID', None), 
+            nn_id=nn_id
+        )
 
         if nn_id is not None:
             self.nn_analytics_path = f'./neural_networks/ai_models/{nn_id}/{nn_id}_analytics.csv'

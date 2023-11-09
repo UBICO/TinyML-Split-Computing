@@ -4,11 +4,12 @@ logger = logging.getLogger(__name__)
 
 class DBManager:
     def store_test_data(self, message_uiid, **kwargs):
-        logger.info("Store Message Data")
+        logger.info(f"Store Message Data")
         try:
             test, _ = TestData.objects.get_or_create(message_uiid=message_uiid)
             # Update fields from kwargs
             for field_name, field_value in kwargs.items():
+                logger.info(f"field_name:{field_name},field_value:{field_value}")
                 if field_value is not None:
                     setattr(test, field_name, field_value)
             test.save()

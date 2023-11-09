@@ -59,7 +59,7 @@ function updateMqttInfo() {
         },
         complete: function () {
             // Schedule the next update in 2 seconds
-            setTimeout(updateMqttInfo, 2000);
+            setTimeout(updateMqttInfo, 5000);
         }
     });
 }
