@@ -37,4 +37,9 @@
             <p>{{ notification }}</p>
         {% endif %}
     </div>
+    <div class="container" id="device-cards-container">
+        <p>Loading...</p>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="{% static 'js/mqtt_client/getMqttStats.js' %}"></script>
 {% endblock %}

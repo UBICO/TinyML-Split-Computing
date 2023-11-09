@@ -1,9 +1,17 @@
 from django.shortcuts import render
 from .MQTTClientManager import MQTTClientManager # Change the import path to the correct one for the class
 import threading
+from django.http import JsonResponse
+
 
 mqtt_manager = MQTTClientManager()
 mqtt_client_thread = None
+
+
+def get_mqtt_info(request):
+    connected_devices_data = mqtt_manager.get_connected_devices_and_message_count()
+    data = {'devices': connected_devices_data}
+    return JsonResponse(data)
 
 def start_mqtt_client(request):
     global mqtt_client_thread
@@ -13,7 +21,15 @@ def start_mqtt_client(request):
         notification = "MQTT Client started."
     else:
         notification = "MQTT Client is already running."
-    return render(request, 'heyot/mqtt_client_menager/mqtt_client.html', {'notification': notification})
+
+    # Get connected device count and total message count
+    connected_devices_data = mqtt_manager.get_connected_devices_and_message_count()
+
+    return render(request, 'heyot/mqtt_client_menager/mqtt_client.html', {
+        'notification': notification,
+        'devices': connected_devices_data
+    })
+
 
 def stop_mqtt_client(request):
     global mqtt_client_thread
@@ -24,4 +40,11 @@ def stop_mqtt_client(request):
         notification = "MQTT Client stopped."
     else:
         notification = "MQTT Client is not running."
-    return render(request, 'heyot/mqtt_client_menager/mqtt_client.html', {'notification': notification})
+
+    # Get connected device count and total message count
+    connected_devices_data = mqtt_manager.get_connected_devices_and_message_count()
+
+    return render(request, 'heyot/mqtt_client_menager/mqtt_client.html', {
+        'notification': notification,
+        'devices': connected_devices_data
+    })

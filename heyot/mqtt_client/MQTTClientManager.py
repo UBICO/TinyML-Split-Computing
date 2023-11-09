@@ -15,7 +15,9 @@ logger = logging.getLogger(__name__)
 
 class MQTTClientManager:
     def __init__(self):
-        
+        # Initialize the dictionary to track connected devices and last message time
+        self.connected_devices = {}
+
         # Mqtt Broker Info 
         self.mqtt_client        = None
         self.MQTT_BROKER        = 'FLOWFACTORY-FABIO'   # Broker Hostname, resolves even without .local when using hotspot
@@ -41,6 +43,8 @@ class MQTTClientManager:
         self.db_manager         = DBManager()
         self.offloading_manager = None
         self.nn_manager         = None 
+
+        self.nn_info_dict       = {} # Dictionary to store information for different neural networks
         self.nn_id              = None
         self.nn_analytics_path  = None
 
@@ -65,66 +69,82 @@ class MQTTClientManager:
         if message_data is None or float(message_data.get('timestamp', None)) < self.start_time:
             return
 
-        # Get the Neural Network id and it's iference times on the edge
-        self.nn_id = message_data.get('nn', None)
-        if self.nn_id is not None:
-            self.nn_analytics_path  = f'./neural_networks/ai_models/{self.nn_id}/{self.nn_id}_analytics.csv'
+        # Get the Neural Network id
+        nn_id = message_data.get('nn', None)
+
+
+        # Update the connected devices dictionary with the latest message timestamp
+        device_id = nn_id
+        if device_id:
+            if device_id not in self.connected_devices:
+                self.connected_devices[device_id] = {
+                    'last_message_time': time.time(),
+                    'total_message_count': 1
+                }
+            else:
+                self.connected_devices[device_id]['last_message_time'] = time.time()
+                self.connected_devices[device_id]['total_message_count'] += 1
+
+
+        if nn_id is not None:
+            self.nn_analytics_path = f'./neural_networks/ai_models/{nn_id}/{nn_id}_analytics.csv'
             analytics_data = pd.read_csv(self.nn_analytics_path)
             msg_latency, avg_speed = self.evaluate_latency_and_speed(message_data, payload_size_bits)
-        
-        # Store Test Information   
-        self.db_manager.store_test_data(
-            message_uiid=message_data.get('messageUIID', None), 
-            nn_id=self.nn_id
-        )
 
-        if msg.topic == "comunication/device/nn_offloading":
-            start_layer_index = int(message_data.get('last_computed_layer'))
-            logger.info(f"Asked to compute from layer: {start_layer_index}")
-            # Predict
-            fake_data = np.random.rand(1, 9)
-            nn_manager = NNManager(nn_id=self.nn_id)
-            layer_outputs, model_loading_time, update_time = nn_manager.perform_predict(start_layer_index=start_layer_index, data=fake_data)
-            # Publish the prediction of each layer
-            self.publish_message(topic='comunication/nn_prediction', message=json.dumps(layer_outputs)) 
-            # Store Test Information
-            self.db_manager.store_test_data(
-                message_uiid=message_data.get('messageUIID', None),  
-                model_loading_time=model_loading_time, 
-                update_time=update_time
-            )
+            # Create or get the NNManager instance for the neural network
+            nn_manager = self.nn_info_dict.get(nn_id)
+            if nn_manager is None:
+                nn_manager = NNManager(nn_id=nn_id)
+                self.nn_info_dict[nn_id] = nn_manager
 
-        if msg.topic == "comunication/device/nn_analytics":
-            # Get Inference Time of the device
-            device_analytics = pd.DataFrame(message_data)
-            inference_time_device = device_analytics["Inference Time (s)"].tolist()
-            inference_time_device = [x/1000 for x in inference_time_device] 
-            # Get inference time of the edge
-            synt_load_edge = 1.7 
-            inference_time_edge = [x/synt_load_edge for x in inference_time_device]
-            # Run offloading algorithm
-            self.offloading_manager = OffloadingManager(
-                avg_speed=avg_speed, 
-                num_layers=len(analytics_data)-1, 
-                layers_sizes=analytics_data["Size (bits)"].tolist(),
-                inference_time_edge=inference_time_edge, 
-                inference_time_device=inference_time_device
-            )
-            best_layer, _, offloaded_layer_data_size, layer_zero_data_size = self.offloading_manager.static_offloading_evaluation()
-            # Publish Prediction
-            self.publish_message(topic='comunication/edge/nn_offloading', message=json.dumps({"layer": best_layer})) 
-            # Store Test Information
-            self.db_manager.store_test_data(
-                message_uiid=message_data.get('messageUIID', None),
-                layer_zero_data_size=layer_zero_data_size, 
-                offloaded_layer_data_size=offloaded_layer_data_size, 
-                avg_speed=avg_speed, avg_latency=msg_latency, 
-                synt_load_edge=synt_load_edge, 
-                chosen_offloading_layer=best_layer, 
-                inference_dev=inference_time_device,  
-                inference_edge=inference_time_edge, 
-                algo_id='0.0.0'
-            )
+            # Handle the message based on the topic
+            if msg.topic == "comunication/device/nn_offloading":
+                start_layer_index = int(message_data.get('last_computed_layer'))
+                logger.info(f"Asked to compute from layer: {start_layer_index}")
+                # Predict
+                fake_data = np.random.rand(1, 9)
+                layer_outputs, model_loading_time, update_time = nn_manager.perform_predict(
+                    start_layer_index=start_layer_index, data=fake_data)
+                # Publish the prediction of each layer
+                self.publish_message(topic='comunication/nn_prediction', message=json.dumps(layer_outputs))
+                # Store Test Information
+                self.db_manager.store_test_data(
+                    message_uiid=message_data.get('messageUIID', None),
+                    model_loading_time=model_loading_time,
+                    update_time=update_time
+                )
+
+            if msg.topic == "comunication/device/nn_analytics":
+                # Get Inference Time of the device
+                device_analytics = pd.DataFrame(message_data)
+                inference_time_device = device_analytics["Inference Time (s)"].tolist()
+                inference_time_device = [x / 1000 for x in inference_time_device]
+                # Get inference time of the edge
+                synt_load_edge = 1.7
+                inference_time_edge = [x / synt_load_edge for x in inference_time_device]
+                # Run offloading algorithm
+                self.offloading_manager = OffloadingManager(
+                    avg_speed=avg_speed,
+                    num_layers=len(analytics_data) - 1,
+                    layers_sizes=analytics_data["Size (bits)"].tolist(),
+                    inference_time_edge=inference_time_edge,
+                    inference_time_device=inference_time_device
+                )
+                best_layer, _, offloaded_layer_data_size, layer_zero_data_size = self.offloading_manager.static_offloading_evaluation()
+                # Publish Prediction
+                self.publish_message(topic='comunication/edge/nn_offloading', message=json.dumps({"layer": best_layer}))
+                # Store Test Information
+                self.db_manager.store_test_data(
+                    message_uiid=message_data.get('messageUIID', None),
+                    layer_zero_data_size=layer_zero_data_size,
+                    offloaded_layer_data_size=offloaded_layer_data_size,
+                    avg_speed=avg_speed, avg_latency=msg_latency,
+                    synt_load_edge=synt_load_edge,
+                    chosen_offloading_layer=best_layer,
+                    inference_dev=inference_time_device,
+                    inference_edge=inference_time_edge,
+                    algo_id='0.0.0'
+                )
 
     def evaluate_latency_and_speed(self, message_data, payload_size_bits):
         # Calculate Latency in seconds and the average_speed
@@ -177,3 +197,26 @@ class MQTTClientManager:
                 logger.info(f"Error publishing message: {e}")
         else:
             logger.info("MQTT client is not initialized. Call 'run_mqtt_client' first.")
+
+    def get_connected_devices_and_message_count(self):
+        # Calculate the current time
+        current_time = time.time()
+
+        # Initialize a list to store data for all connected devices
+        connected_devices_data = []
+
+        # Iterate through connected devices and count the messages
+        for device_id, device_info in self.connected_devices.items():
+            last_message_time = device_info['last_message_time']
+            total_messages = device_info['total_message_count']
+
+            # Check if the device has sent a message in the last 10 seconds
+            if current_time - last_message_time <= 10:
+                device_data = {
+                    'device_id': device_id,
+                    'connected_device_count': 1,  # You can leave it as 1 for each device
+                    'total_message_count': total_messages
+                }
+                connected_devices_data.append(device_data)
+
+        return connected_devices_data

@@ -73,3 +73,24 @@ form{
     text-decoration: none;
     font-weight: bold;
 }
+
+#device-cards-container{ 
+    padding: 20px;
+}
+
+.device-stats-card{
+    border: solid 2px pink !important;
+    border-radius: 6px !important;
+    color:white  !important;
+    background-color: black !important;
+    font-weight: bold;
+}
+
+.small-spinner{
+    height:14px !important;
+    width: 14px !important;
+    color:pink;
+    margin-right: 5px;
+    margin-left: 5px;
+
+}

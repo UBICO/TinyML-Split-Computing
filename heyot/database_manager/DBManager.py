@@ -14,23 +14,3 @@ class DBManager:
             test.save()
         except Exception as e:
             logger.error(f"Error while storing message data: {e}")
-
-"""
-db_manager = DBManager()
-db_manager.store_test_data(
-    message_uiid=message_uiid,
-    layer_zero_data_size=layer_zero_data_size,
-    offloaded_layer_data_size=offloaded_layer_data_size,
-    synt_latency=synt_latency,
-    synt_load_edge=synt_load_edge,
-    avg_latency=avg_latency,
-    avg_speed=avg_speed,
-    nn_id=nn_id,
-    algo_id=algo_id,
-    inference_dev=inference_dev,
-    inference_edge=inference_edge,
-    chosen_offloading_layer=chosen_offloading_layer,
-    model_loading_time=model_loading_time,
-    update_time=update_time
-)
-"""
