@@ -76,6 +76,7 @@ form{
 
 #device-cards-container{ 
     padding: 20px;
+    text-align: center;
 }
 
 .device-stats-card{
@@ -84,6 +85,8 @@ form{
     color:white  !important;
     background-color: black !important;
     font-weight: bold;
+    padding: 10px;
+    margin:10px;
 }
 
 .small-spinner{
@@ -92,5 +95,4 @@ form{
     color:pink;
     margin-right: 5px;
     margin-left: 5px;
-
 }
