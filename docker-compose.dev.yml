@@ -11,8 +11,7 @@ services:
     volumes:
       - ./${DJANGO_PROJECT_NAME}/neural_networks/ai_models:/home/heyot/web/neural_networks/ai_models
       - ./${DJANGO_PROJECT_NAME}/exported_tests_csv:/home/heyot/web/exported_tests_csv
-      # - log_data:/home/${DJANGO_PROJECT_NAME}/web/logs
-      - django_sqlite_data:/home/${DJANGO_PROJECT_NAME}/web/db.sqlite3
+      - sqlite_data:/home/${DJANGO_PROJECT_NAME}/web/sqlite_data
     ports:
       - 8000:8000
     env_file:
@@ -20,7 +19,7 @@ services:
 ######################################################################################
   mosquitto:
       container_name: ${DJANGO_PROJECT_NAME}_mosquitto
-      image: h${DJANGO_PROJECT_NAME}_mosquitto
+      image: ${DJANGO_PROJECT_NAME}_mosquitto
       build:
         context: ./mosquitto
         dockerfile: ./dockerfiles/Dockerfile
@@ -41,5 +40,4 @@ networks:
     name: mosquitto
 ######################################################################################
 volumes:
-  #log_data:
-  django_sqlite_data:
+  sqlite_data:
