@@ -132,7 +132,8 @@ StaticJsonDocument<512> runNNLayer(int offloading_layer_index){
     output = interpreter->output(0);
     interpreter->Invoke();
     
-    //jsonDoc["Layer"][i] = "nn_layer_"+i;
+    // Returns a json with the layer output of each computed layer and it's inference time
+    jsonDoc["layer_output"][i] = output;
     jsonDoc["layer_inference_time"][i] = (micros()-inizio);
     Serial.println("Computed layer: " + String(i)+" Inf Time: " + String(micros()-inizio) );
   }

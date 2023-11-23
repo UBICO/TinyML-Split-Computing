@@ -255,7 +255,7 @@ class NNBuilder:
             data.append([layer_name, size_bits, train_time, inference_time])
 
         # Create a DataFrame from the list
-        df = pd.DataFrame(data, columns=['Layer', 'Size (bits)', 'Training Time (s)', 'Inference Time (s)'])
+        df = pd.DataFrame(data, columns=['layer', 'layer_size', 'training_time', 'layer_inference_time'])
 
         # Export the DataFrame to a CSV file
         df.to_csv(f'{self.model_name}/{self.model_name}_analytics.csv', index=False)

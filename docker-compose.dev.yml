@@ -6,9 +6,14 @@ services:
     image: ${DJANGO_PROJECT_NAME}_web
     build:
       context: ./${DJANGO_PROJECT_NAME}
+      args:
+        - DJANGO_PROJECT_NAME=${DJANGO_PROJECT_NAME}
+        - WORK_DIR=${DJANGO_PROJECT_NAME}
+        - APP_USER=${APP_USER}
       dockerfile: ./dockerfiles/Dockerfile.dev
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
+      - ./${DJANGO_PROJECT_NAME}/:/home/${DJANGO_PROJECT_NAME}/web/
       - ./${DJANGO_PROJECT_NAME}/neural_networks/ai_models:/home/heyot/web/neural_networks/ai_models
       - ./${DJANGO_PROJECT_NAME}/exported_tests_csv:/home/heyot/web/exported_tests_csv
       - sqlite_data:/home/${DJANGO_PROJECT_NAME}/web/sqlite_data

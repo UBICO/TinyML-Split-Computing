@@ -23,12 +23,13 @@ class NNManager:
         the .csv file containing it's inference time for each layer with the new computation time
         """
         logger.info(f"Updating the Edge Analytics")
-        start_time = time.time()  # Initialize the total time
+        start_time = time.time()  
+        # Initialize the total time
         # Load the existing CSV file
         # csv_file_path = f"./neural_networks/ai_models/{nn_id}/{nn_id}_analytics.csv" 
         # analytics_data = pd.read_csv(csv_file_path)
         # Update the inference time for the specified layer and save the updated data back to the CSV file
-        # analytics_data.at[layer_id, 'Inference Time (s)'] = new_inference_time 
+        # analytics_data.at[layer_id, 'layer_inference_time'] = new_inference_time 
         # analytics_data.to_csv(csv_file_path, index=False) 
         end_predict = time.time()
         self.update_time = end_predict - start_time

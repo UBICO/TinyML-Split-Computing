@@ -123,7 +123,7 @@ class MQTTClientManager:
             if msg.topic == "comunication/device/nn_analytics":
                 # Get Inference Time of the device
                 device_analytics = pd.DataFrame(message_data)
-                inference_time_device = device_analytics["Inference Time (s)"].tolist()
+                inference_time_device = device_analytics["layer_inference_time"].tolist()
                 inference_time_device = [x / 1000 for x in inference_time_device]
                 # Get inference time of the edge
                 synt_load_edge = 1.7
@@ -132,7 +132,7 @@ class MQTTClientManager:
                 self.offloading_manager = OffloadingManager(
                     avg_speed=avg_speed,
                     num_layers=len(analytics_data) - 1,
-                    layers_sizes=analytics_data["Size (bits)"].tolist(),
+                    layers_sizes=analytics_data["layer_size"].tolist(),
                     inference_time_edge=inference_time_edge,
                     inference_time_device=inference_time_device
                 )

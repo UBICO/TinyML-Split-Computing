@@ -167,3 +167,8 @@ LOGGING = {
         'level': 'DEBUG',  # Set the desired log level (e.g., DEBUG, INFO, WARNING, ERROR, CRITICAL)
     },
 }
+
+import os
+
+# Set the environment variable to suppress info and warning messages
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # 0: all messages, 1: info messages, 2: error messages, 3: no messages

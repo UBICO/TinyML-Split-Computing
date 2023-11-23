@@ -11,7 +11,7 @@ def test(request, nn_id):
     fake_data = np.random.rand(1, 9)
     nn_manager = NNManager(nn_id=nn_id)
     layer_outputs, model_loading_time, update_time = nn_manager.perform_predict(start_layer_index=start_layer_index, data=fake_data)
-    last_inference_time = nn_manager.get_model_analytics()["Inference Time (s)"]
+    last_inference_time = nn_manager.get_model_analytics()["layer_inference_time"]
     result = {
         "total_predict_time(ms)": sum(last_inference_time.to_list()),
         "layer_outputs" : layer_outputs,

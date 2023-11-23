@@ -4,6 +4,13 @@ logger = logging.getLogger(__name__)
 
 class DBManager:
     def store_test_data(self, message_uiid, **kwargs):
+        """
+        The function `store_test_data` stores test data in the database, updating fields from the
+        `kwargs` dictionary.
+        
+        :param message_uiid: The parameter "message_uiid" is used to identify a specific message. It is
+        likely a unique identifier for each message in the system.
+        """
         logger.info(f"Store Message Data")
         try:
             test, _ = TestData.objects.get_or_create(message_uiid=message_uiid)
