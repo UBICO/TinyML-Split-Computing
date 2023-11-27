@@ -64,6 +64,7 @@ const int nonValidLayer = 999;
 int offloadingLayer = nonValidLayer;
 bool offloaded = false;
 DynamicJsonDocument doc(512); 
+bool modelLoaded = false;
 
 /*
  * ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -85,36 +86,42 @@ void generateMessageUUID(){
 * ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 */
 void loadNNLayer(String model_name){
-  // Import del modello da testare -> Nome nell'header file
-  if(model_name.equals("mod_0"))model = tflite::GetModel(mod_0);
-  if(model_name.equals("mod_1"))model = tflite::GetModel(mod_1);
-  if(model_name.equals("mod_2"))model = tflite::GetModel(mod_2);
-  if(model_name.equals("mod_3"))model = tflite::GetModel(mod_3);
-  if(model_name.equals("mod_4"))model = tflite::GetModel(mod_4);
-  if(model_name.equals("mod_5"))model = tflite::GetModel(mod_5);
-  if(model_name.equals("mod_6"))model = tflite::GetModel(mod_6);
-  if(model_name.equals("mod_7"))model = tflite::GetModel(mod_7);
+  if(modelLoaded) {
+    Serial.print("\nModel Layer Already Loaded! \n");
+    return;
+  }else{
+    // Import del modello da testare -> Nome nell'header file
+    if(model_name.equals("mod_0"))model = tflite::GetModel(mod_0);
+    if(model_name.equals("mod_1"))model = tflite::GetModel(mod_1);
+    if(model_name.equals("mod_2"))model = tflite::GetModel(mod_2);
+    if(model_name.equals("mod_3"))model = tflite::GetModel(mod_3);
+    if(model_name.equals("mod_4"))model = tflite::GetModel(mod_4);
+    if(model_name.equals("mod_5"))model = tflite::GetModel(mod_5);
+    if(model_name.equals("mod_6"))model = tflite::GetModel(mod_6);
+    if(model_name.equals("mod_7"))model = tflite::GetModel(mod_7);
 
-  if (model->version() != TFLITE_SCHEMA_VERSION) {
-      Serial.print("Model provided is schema version not equal to supported!");
-      return;
-  } else {
-      Serial.print("\nModel Layer Loaded! \n");
-  }
-  
-  // Questo richiama tutte le implementazioni delle operazioni di cui abbiamo bisogno
-  tflite::AllOpsResolver resolver;
-  tflite::MicroInterpreter static_interpreter(model, resolver, tensor_arena, kTensorArenaSize, error_reporter);
-  interpreter = &static_interpreter;
-  Serial.print("Interpreter Loaded");
+    if (model->version() != TFLITE_SCHEMA_VERSION) {
+        Serial.print("Model provided is schema version not equal to supported!");
+        return;
+    } else {
+        Serial.print("\nModel Layer Loaded! \n");
+    }
+    
+    // Questo richiama tutte le implementazioni delle operazioni di cui abbiamo bisogno
+    tflite::AllOpsResolver resolver;
+    tflite::MicroInterpreter static_interpreter(model, resolver, tensor_arena, kTensorArenaSize, error_reporter);
+    interpreter = &static_interpreter;
+    Serial.print("Interpreter Loaded");
 
-  // Alloco la memoria del tensor_arena per i tensori del modello
-  TfLiteStatus allocate_status = interpreter->AllocateTensors();
-  if (allocate_status != kTfLiteOk) {
-      Serial.println("AllocateTensors() failed");
-      return;
-  } else {
-    Serial.println("AllocateTensors() done\n");
+    // Alloco la memoria del tensor_arena per i tensori del modello
+    TfLiteStatus allocate_status = interpreter->AllocateTensors();
+    if (allocate_status != kTfLiteOk) {
+        Serial.println("AllocateTensors() failed");
+        return;
+    } else {
+      Serial.println("AllocateTensors() done\n");
+    }
+    modelLoaded = true;
   }
 }
 
@@ -291,11 +298,12 @@ void predictAndOffload(){
     StaticJsonDocument<512> jsonDocNNOutput;
     StaticJsonDocument<512> jsonDoc;
 
-    //jsonDocNNOutput = runNNLayer(offloadingLayer);
+    jsonDocNNOutput = runNNLayer(offloadingLayer);
 
     // Generate the JSON message & Fill in the JSON data
     jsonDoc["last_computed_layer"] = ""+String(offloadingLayer)+"";
-    jsonDoc["last_layer_output"] = "";
+    int lastComputeLayerId = jsonDocNNOutput["layer_output"].size() - 1;
+    jsonDoc["last_layer_output"] = jsonDocNNOutput["layer_output"][lastComputeLayerId];
     jsonDoc["timestamp"] = getCurrTimeStr();
     jsonDoc["messageUIID"] = MessageUUID;
     jsonDoc["nn"] = nn;
