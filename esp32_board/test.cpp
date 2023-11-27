@@ -101,18 +101,21 @@ void loadNNLayer(String model_name){
   } else {
       Serial.print("\nModel Layer Loaded! \n");
   }
+  
   // Questo richiama tutte le implementazioni delle operazioni di cui abbiamo bisogno
   tflite::AllOpsResolver resolver;
   tflite::MicroInterpreter static_interpreter(model, resolver, tensor_arena, kTensorArenaSize, error_reporter);
   interpreter = &static_interpreter;
-  Serial.print("Interprete ok");
+  Serial.print("Interpreter Loaded");
 
   // Alloco la memoria del tensor_arena per i tensori del modello
   TfLiteStatus allocate_status = interpreter->AllocateTensors();
   if (allocate_status != kTfLiteOk) {
       Serial.println("AllocateTensors() failed");
       return;
-  } else {Serial.println("AllocateTensors() done\n");}
+  } else {
+    Serial.println("AllocateTensors() done\n");
+  }
 }
 
 /* 
