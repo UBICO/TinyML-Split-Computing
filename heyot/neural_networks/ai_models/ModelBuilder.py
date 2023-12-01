@@ -15,11 +15,11 @@ class ModelBuilder:
 
     def build_model(self):
         model = models.Sequential()
-        model.add(layers.Conv2D(32, (3, 3), activation='relu', input_shape=(self.image_size, self.image_size, 3)))
-        model.add(layers.MaxPooling2D((2, 2)))
-        model.add(layers.Flatten())
-        model.add(layers.Dense(64, activation='relu'))
-        model.add(layers.Dense(self.num_classes, activation='sigmoid'))
+        model.add(layers.Conv2D(32, (3, 3), activation='relu', input_shape=(self.image_size, self.image_size, 3),name="layer_0"))
+        model.add(layers.MaxPooling2D((2, 2), name="layer_1"))
+        model.add(layers.Flatten(name="layer_2"))
+        model.add(layers.Dense(64, activation='relu', name="layer_3"))
+        model.add(layers.Dense(self.num_classes, activation='sigmoid', name="layer_4"))
 
         model.compile(optimizer='adam',
                     loss='binary_crossentropy',
