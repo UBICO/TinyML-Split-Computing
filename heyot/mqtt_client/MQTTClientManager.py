@@ -69,7 +69,7 @@ class MQTTClientManager:
             return
 
         # Get the Neural Network id
-        nn_id = message_data.get('nn', None)
+        nn_id = message_data.get('nn_id', None)
 
         # Update the connected devices dictionary with the latest message timestamp
         device_id = nn_id
@@ -92,6 +92,7 @@ class MQTTClientManager:
             nn_id=nn_id
         )
 
+        logger.info(f"{message_data}")
         if nn_id is not None:
             self.nn_analytics_path = f'./neural_networks/ai_models/{nn_id}/{nn_id}_analytics.csv'
             analytics_data = pd.read_csv(self.nn_analytics_path)
@@ -131,7 +132,7 @@ class MQTTClientManager:
                 # Run offloading algorithm
                 self.offloading_manager = OffloadingManager(
                     avg_speed=avg_speed,
-                    num_layers=len(analytics_data) - 1,
+                    num_layers=len(device_analytics) - 1,
                     layers_sizes=analytics_data["layer_size"].tolist(),
                     inference_time_edge=inference_time_edge,
                     inference_time_device=inference_time_device

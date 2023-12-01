@@ -14,17 +14,12 @@
  * NN Modles Layers
  * ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  */
-#define MODEL_NUMBER "02"
-#include "models/model_02_layer_0.h"
-#include "models/model_02_layer_1.h"
-#include "models/model_02_layer_2.h"
-#include "models/model_02_layer_3.h"
-#include "models/model_02_layer_4.h"
-#include "models/model_02_layer_5.h"
-#include "models/model_02_layer_6.h"
-#include "models/model_02_layer_7.h"
-String nn = MODEL_NUMBER;
-
+#define MODEL_NUMBER "03"
+#include "models/model_03_layer_0.h"
+#include "models/model_03_layer_1.h"
+#include "models/model_03_layer_2.h"
+#include "models/model_03_layer_3.h"
+const int MAX_NUM_LAYER = 4;
 /* 
 * ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 * LIBS for TFLITE
@@ -64,7 +59,7 @@ const int nonValidLayer = 999;
 int offloadingLayer = nonValidLayer;
 bool offloaded = false;
 DynamicJsonDocument doc(512); 
-bool modelLoaded = false;
+bool modelLoaded=false;
 
 /*
  * ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -78,6 +73,7 @@ void generateMessageUUID(){
   uuid.setRandomMode();
   uuid.generate();
   MessageUUID = (String)uuid.toCharArray();
+  MessageUUID = MessageUUID.substring(0, 4);
  }
 
 /* 
@@ -86,43 +82,31 @@ void generateMessageUUID(){
 * ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 */
 void loadNNLayer(String model_name){
-  if(modelLoaded) {
-    Serial.print("\nModel Layer Already Loaded! \n");
-    return;
-  }else{
-    // Import del modello da testare -> Nome nell'header file
-    if(model_name.equals("mod_0"))model = tflite::GetModel(mod_0);
-    if(model_name.equals("mod_1"))model = tflite::GetModel(mod_1);
-    if(model_name.equals("mod_2"))model = tflite::GetModel(mod_2);
-    if(model_name.equals("mod_3"))model = tflite::GetModel(mod_3);
-    if(model_name.equals("mod_4"))model = tflite::GetModel(mod_4);
-    if(model_name.equals("mod_5"))model = tflite::GetModel(mod_5);
-    if(model_name.equals("mod_6"))model = tflite::GetModel(mod_6);
-    if(model_name.equals("mod_7"))model = tflite::GetModel(mod_7);
+  // Import del modello da testare -> Nome nell'header file
+  if(model_name.equals("mod_0"))model = tflite::GetModel(mod_0);
+  if(model_name.equals("mod_1"))model = tflite::GetModel(mod_1);
+  if(model_name.equals("mod_2"))model = tflite::GetModel(mod_2);
+  if(model_name.equals("mod_3"))model = tflite::GetModel(mod_3);
 
-    if (model->version() != TFLITE_SCHEMA_VERSION) {
-        Serial.print("Model provided is schema version not equal to supported!");
-        return;
-    } else {
-        Serial.print("\nModel Layer Loaded! \n");
-    }
-    
-    // Questo richiama tutte le implementazioni delle operazioni di cui abbiamo bisogno
-    tflite::AllOpsResolver resolver;
-    tflite::MicroInterpreter static_interpreter(model, resolver, tensor_arena, kTensorArenaSize, error_reporter);
-    interpreter = &static_interpreter;
-    Serial.print("Interpreter Loaded");
 
-    // Alloco la memoria del tensor_arena per i tensori del modello
-    TfLiteStatus allocate_status = interpreter->AllocateTensors();
-    if (allocate_status != kTfLiteOk) {
-        Serial.println("AllocateTensors() failed");
-        return;
-    } else {
-      Serial.println("AllocateTensors() done\n");
-    }
-    modelLoaded = true;
+  if (model->version() != TFLITE_SCHEMA_VERSION) {
+      Serial.print("Model provided is schema version not equal to supported!");
+      return;
+  } else {
+      Serial.print("\nModel Layer Loaded! \n");
   }
+  // Questo richiama tutte le implementazioni delle operazioni di cui abbiamo bisogno
+  tflite::AllOpsResolver resolver;
+  tflite::MicroInterpreter static_interpreter(model, resolver, tensor_arena, kTensorArenaSize, error_reporter);
+  interpreter = &static_interpreter;
+  Serial.print("Interprete ok");
+
+  // Alloco la memoria del tensor_arena per i tensori del modello
+  TfLiteStatus allocate_status = interpreter->AllocateTensors();
+  if (allocate_status != kTfLiteOk) {
+      Serial.println("AllocateTensors() failed");
+      return;
+  } else {Serial.println("AllocateTensors() done\n");}
 }
 
 /* 
@@ -130,23 +114,41 @@ void loadNNLayer(String model_name){
 * INFERENCE FOR NN LAYER
 * ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 */
-StaticJsonDocument<512> runNNLayer(int offloading_layer_index){
+StaticJsonDocument<512> runNNLayer(int offloading_layer_index) {
   // Generate the JSON message
   StaticJsonDocument<512> jsonDoc;
-  for (int i = 0; i < offloading_layer_index; i++){
+  JsonArray outputArray;  // Declare outputArray outside the loop
+
+  for (int i = 0; i < offloading_layer_index; i++) {
     String model_name = "mod_" + String(i);
     float inizio = micros();
 
-    loadNNLayer(model_name);
+    if (!modelLoaded) {
+      loadNNLayer(model_name);
+      modelLoaded = true;
+    }
+
     input = interpreter->input(0);
     output = interpreter->output(0);
     interpreter->Invoke();
-    
-    // Returns a json with the layer output of each computed layer and it's inference time
-    jsonDoc["layer_output"][i] = output;
-    jsonDoc["layer_inference_time"][i] = (micros()-inizio);
-    Serial.println("Computed layer: " + String(i)+" Inf Time: " + String(micros()-inizio) );
+
+    // Assuming output is a TfLiteTensor
+    const float* outputData = interpreter->typed_output_tensor<float>(0);
+
+    // Initialize layer_output[i] as an array
+    outputArray = jsonDoc["layer_output"][i].to<JsonArray>();
+
+    for (int j = 0; j < output->dims->data[0]; ++j) {
+      // Add each element to the array
+      outputArray.add(outputData[j]);
+    }
+
+    jsonDoc["layer_inference_time"][i] = (micros() - inizio);
+    Serial.println("Computed layer: " + String(i) + " Inf Time: " + String(micros() - inizio));
   }
+
+  // Now, you can find the last layer output outside the loop
+  jsonDoc["last_layer_output"] = outputArray[outputArray.size() - 1];
   return jsonDoc;
 }
 
@@ -258,11 +260,11 @@ void getOffloadingInformation() {
 void publishDeviceAnaytics(){
  // Generate the JSON message
   StaticJsonDocument<512> jsonDoc;
-  const int firstRunOffloadingLayer = 8;
+  const int firstRunOffloadingLayer = MAX_NUM_LAYER;
   jsonDoc = runNNLayer(firstRunOffloadingLayer);
   jsonDoc["timestamp"] = getCurrTimeStr();
   jsonDoc["messageUIID"] = MessageUUID;
-  jsonDoc["nn"] = nn;
+  jsonDoc["nn_id"] = (String)MODEL_NUMBER;
   // Serialize the JSON document to a string
   String jsonMessage;
   serializeJson(jsonDoc, jsonMessage);
@@ -271,20 +273,6 @@ void publishDeviceAnaytics(){
   Serial.println("Published Device Analytics");
 }
 
-/* 
- * ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- * SETUP 
- * ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- */
-void setup() {
-  Serial.begin(115200);
-  wifiConfiguration();        // Wi-Fi Connection
-  mqttConfiguration();        // MQTT
-  timeConfiguration();        // Synchronize Timer - NTP server
-  generateMessageUUID();      // Generate an Identifier for the message
-  getOffloadingInformation(); // Subscribe to a topic to recieve updates about the offloading
-  publishDeviceAnaytics();    // Publishes to a topic the inference time of each layer on the device
-}
 
 /*
 * ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -301,12 +289,12 @@ void predictAndOffload(){
     jsonDocNNOutput = runNNLayer(offloadingLayer);
 
     // Generate the JSON message & Fill in the JSON data
+    jsonDoc = jsonDocNNOutput;
     jsonDoc["last_computed_layer"] = ""+String(offloadingLayer)+"";
-    int lastComputeLayerId = jsonDocNNOutput["layer_output"].size() - 1;
-    jsonDoc["last_layer_output"] = jsonDocNNOutput["layer_output"][lastComputeLayerId];
     jsonDoc["timestamp"] = getCurrTimeStr();
     jsonDoc["messageUIID"] = MessageUUID;
-    jsonDoc["nn"] = nn;
+    jsonDoc["nn_id"] = (String)MODEL_NUMBER;
+    
 
     // Serialize the JSON document to a string and Publish the JSON message to the topic
     String jsonMessage;
@@ -314,6 +302,21 @@ void predictAndOffload(){
     client.publish("comunication/device/nn_offloading", jsonMessage.c_str(), 2);
     Serial.println("\nPerformed Offloading from layer: " + String(offloadingLayer));
   }
+}
+
+/* 
+ * ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ * SETUP 
+ * ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ */
+void setup() {
+  Serial.begin(115200);
+  wifiConfiguration();        // Wi-Fi Connection
+  mqttConfiguration();        // MQTT
+  timeConfiguration();        // Synchronize Timer - NTP server
+  generateMessageUUID();      // Generate an Identifier for the message
+  getOffloadingInformation(); // Subscribe to a topic to recieve updates about the offloading
+  publishDeviceAnaytics();    // Publishes to a topic the inference time of each layer on the device
 }
 
 /* 

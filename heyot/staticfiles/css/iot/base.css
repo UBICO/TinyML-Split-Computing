@@ -1,0 +1,98 @@
+body{
+    color:white !important;
+    background-color: black !important;
+    font-family: 'Courier New' !important;
+}
+
+.jumbotron{
+    text-align: center;
+}
+
+#container {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+html, body, #container {
+    height: 100%;
+}
+
+form{
+    padding: 10px;
+    text-align: center;
+}
+
+#notification{
+    padding:20px;
+    text-align: center;
+    font-family: courier;
+    font-weight:600;
+    cursor:pointer;
+}
+#notification:hover{
+    color:pink;
+    transition: transform 125ms;
+    transform: translateY(-5px);
+}
+
+
+#mqtt-form-container{
+    display:flex; 
+    justify-content:center;
+}
+#dashboard-menu{
+    background-color: black !important;
+    padding:20px;
+}    
+
+.btn-primary{
+    font-weight: bold !important;
+    background-color: black !important;
+    border: solid 2px white !important;
+}
+.btn-primary:hover{
+    background-color: black !important;
+    border: solid 2px pink !important;
+    color:pink !important;
+}
+
+#logo-img{
+    height:200px !important;
+  
+}
+.jumbotron{cursor: pointer;}
+.jumbotron:hover{
+    color:pink;
+    transition: transform 125ms;
+    transform: translateY(-5px);
+}
+
+.git-profile-link{
+    color:pink;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+#device-cards-container{ 
+    padding: 20px;
+    text-align: center;
+}
+
+.device-stats-card{
+    border: solid 2px pink !important;
+    border-radius: 6px !important;
+    color:white  !important;
+    background-color: black !important;
+    font-weight: bold;
+    padding: 10px;
+    margin:10px;
+}
+
+.small-spinner{
+    height:14px !important;
+    width: 14px !important;
+    color:pink;
+    margin-right: 5px;
+    margin-left: 5px;
+}

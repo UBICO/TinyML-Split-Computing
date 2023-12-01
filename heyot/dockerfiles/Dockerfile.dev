@@ -6,6 +6,7 @@
 # Use the official Python 3.9 image (Debian-based)
 FROM python:3.9
 
+ARG WORK_DIR=$WORK_DIR
 # Set the work directory name
 ENV WORK_DIR=$WORK_DIR
 ENV WORK_DIR=/home/$WORK_DIR/web

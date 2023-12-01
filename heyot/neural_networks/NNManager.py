@@ -74,7 +74,7 @@ class NNManager:
         self.data = data
         self.load_model()                           # Load the model
         self.start_layer_index = start_layer_index   # Specify the starting layer (0-based index)
-        num_layers = len(self.model.layers) -1 # The output layer needs to be discarded
+        num_layers = len(self.model.layers) 
         # Iterate through the layers starting from the specified index
         [self.predic_single_layer(layer_id, layer_data=data) for layer_id in range(start_layer_index, num_layers)] 
         return self.layer_outputs, self.model_loading_time, self.update_time
