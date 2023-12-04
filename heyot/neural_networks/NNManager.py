@@ -26,11 +26,11 @@ class NNManager:
         start_time = time.time()  
         # Initialize the total time
         # Load the existing CSV file
-        # csv_file_path = f"./neural_networks/ai_models/{nn_id}/{nn_id}_analytics.csv" 
-        # analytics_data = pd.read_csv(csv_file_path)
+        csv_file_path = f"./neural_networks/ai_models/models/{self.nn_id}/analytics_data/analyticss.csv" 
+        analytics_data = pd.read_csv(csv_file_path)
         # Update the inference time for the specified layer and save the updated data back to the CSV file
-        # analytics_data.at[layer_id, 'layer_inference_time'] = new_inference_time 
-        # analytics_data.to_csv(csv_file_path, index=False) 
+        analytics_data.at[layer_id, 'layer_inference_time'] = new_inference_time 
+        analytics_data.to_csv(csv_file_path, index=False) 
         end_predict = time.time()
         self.update_time = end_predict - start_time
         logger.info(f"Updated the Edge Analytics: {self.update_time}")
@@ -65,7 +65,7 @@ class NNManager:
         end_predict = time.time_ns() / 1_000_000_000
         single_layer_predict_time = (end_predict - start_predict)
         # Updates the analytics of the model with the new inference time
-        self.update_csv_file(layer_id=layer_id, new_inference_time=single_layer_predict_time)
+        # self.update_csv_file(layer_id=layer_id, new_inference_time=single_layer_predict_time)
         # Append the layer name and output to the layer_outputs list
         self.layer_outputs.append({"name": layer.name, "output": str(layer_output.tolist())})
 
