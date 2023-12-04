@@ -94,8 +94,9 @@ class MQTTClientManager:
 
         logger.info(f"{message_data}")
         if nn_id is not None:
-            self.nn_analytics_path = f'./neural_networks/ai_models/{nn_id}/{nn_id}_analytics.csv'
-            analytics_data = pd.read_csv(self.nn_analytics_path)
+            # Da rimuovere utilizzo il metodo della classe giusta
+            #self.nn_analytics_path = f'./neural_networks/ai_models/models/{nn_id}/analytics_data/analytics.csv'
+            #analytics_data = pd.read_csv(self.nn_analytics_path)
             msg_latency, avg_speed = self.evaluate_latency_and_speed(message_data, payload_size_bits)
 
             # Create or get the NNManager instance for the neural network
@@ -103,6 +104,7 @@ class MQTTClientManager:
             if nn_manager is None:
                 nn_manager = NNManager(nn_id=nn_id)
                 self.nn_info_dict[nn_id] = nn_manager
+                analytics_data = nn_manager.get_model_analytics()
 
             # Handle the message based on the topic
             if msg.topic == "comunication/device/nn_offloading":
