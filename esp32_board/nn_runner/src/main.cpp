@@ -14,11 +14,12 @@
  * NN Modles Layers
  * ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  */
-#define MODEL_NUMBER "03"
-#include "models/model_03_layer_0.h"
-#include "models/model_03_layer_1.h"
-#include "models/model_03_layer_2.h"
-#include "models/model_03_layer_3.h"
+#define MODEL_NAME "test_model"
+#include "model_layers/layer_0.h"
+#include "model_layers/layer_1.h"
+#include "model_layers/layer_2.h"
+#include "model_layers/layer_3.h"
+#include "model_layers/layer_4.h"
 const int MAX_NUM_LAYER = 4;
 /* 
 * ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -31,15 +32,18 @@ const int MAX_NUM_LAYER = 4;
 #include "tensorflow/lite/micro/micro_error_reporter.h"
 #include "tensorflow/lite/micro/all_ops_resolver.h"
 #include "tensorflow/lite/micro/system_setup.h"
-
 /* 
 * ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 *  CONFIGURATIONS
 * ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 */
 #include "conf.h"
-
-// NN CONF
+/* 
+* ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+*  GLOBAL VARIABLES
+* ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+*/
+// NN Variables
 tflite::MicroErrorReporter micro_error_reporter;
 tflite::ErrorReporter* error_reporter = &micro_error_reporter;
 const tflite::Model* model = nullptr;
@@ -48,18 +52,18 @@ TfLiteTensor* input = nullptr;
 TfLiteTensor* output = nullptr;
 constexpr int kTensorArenaSize = 2*1024;
 uint8_t tensor_arena[kTensorArenaSize];
-//OTHER CONFS
+bool modelLoaded=false;
+const int nonValidLayer = 999;
+// Communication & Offloading Variables
 WiFiClient espClient;
 PubSubClient client(espClient);
 int computedLayer = 0;
 struct tm timeinfo;
 UUID uuid;
 String MessageUUID = "";
-const int nonValidLayer = 999;
+DynamicJsonDocument doc(512); 
 int offloadingLayer = nonValidLayer;
 bool offloaded = false;
-DynamicJsonDocument doc(512); 
-bool modelLoaded=false;
 
 /*
  * ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -81,13 +85,10 @@ void generateMessageUUID(){
 * LOAD NN LAYER
 * ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 */
-void loadNNLayer(String model_name){
-  // Import del modello da testare -> Nome nell'header file
-  if(model_name.equals("mod_0"))model = tflite::GetModel(mod_0);
-  if(model_name.equals("mod_1"))model = tflite::GetModel(mod_1);
-  if(model_name.equals("mod_2"))model = tflite::GetModel(mod_2);
-  if(model_name.equals("mod_3"))model = tflite::GetModel(mod_3);
-
+void loadNNLayer(String layer_number){
+  // Import del layer da eseguire -> Nome nell'header file
+  int layer_number = layer_number.substring(6).toInt();
+  model = tflite::GetModel(layer_number);
 
   if (model->version() != TFLITE_SCHEMA_VERSION) {
       Serial.print("Model provided is schema version not equal to supported!");
@@ -120,11 +121,11 @@ StaticJsonDocument<512> runNNLayer(int offloading_layer_index) {
   JsonArray outputArray;  // Declare outputArray outside the loop
 
   for (int i = 0; i < offloading_layer_index; i++) {
-    String model_name = "mod_" + String(i);
+    String layer_name = "layer_" + String(i);
     float inizio = micros();
 
-    if (!modelLoaded) {
-      loadNNLayer(model_name);
+    if (!modelLoaded){
+      loadNNLayer(layer_name);
       modelLoaded = true;
     }
 
@@ -264,7 +265,7 @@ void publishDeviceAnaytics(){
   jsonDoc = runNNLayer(firstRunOffloadingLayer);
   jsonDoc["timestamp"] = getCurrTimeStr();
   jsonDoc["messageUIID"] = MessageUUID;
-  jsonDoc["nn_id"] = (String)MODEL_NUMBER;
+  jsonDoc["nn_id"] = MODEL_NAME;
   // Serialize the JSON document to a string
   String jsonMessage;
   serializeJson(jsonDoc, jsonMessage);
@@ -293,7 +294,7 @@ void predictAndOffload(){
     jsonDoc["last_computed_layer"] = ""+String(offloadingLayer)+"";
     jsonDoc["timestamp"] = getCurrTimeStr();
     jsonDoc["messageUIID"] = MessageUUID;
-    jsonDoc["nn_id"] = (String)MODEL_NUMBER;
+    jsonDoc["nn_id"] = MODEL_NAME;
     
 
     // Serialize the JSON document to a string and Publish the JSON message to the topic
