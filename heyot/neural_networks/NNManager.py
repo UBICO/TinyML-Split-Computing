@@ -80,7 +80,7 @@ class NNManager:
         return self.layer_outputs, self.model_loading_time, self.update_time
     
     def get_tflite_model_path(self) ->str:
-        return f'./neural_networks/ai_models/{self.nn_id}/{self.nn_id}.h5'
+        return f'./neural_networks/ai_models/models/{self.nn_id}/{self.nn_id}.h5'
 
     def get_model_analytics(self) -> pd.DataFrame:
         self.nn_analytics_path  = f'./neural_networks/ai_models/models/{self.nn_id}/analytics_data/analytics.csv'
