@@ -85,10 +85,11 @@ void generateMessageUUID(){
 * LOAD NN LAYER
 * ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 */
-void loadNNLayer(String layer_number){
+void loadNNLayer(String layer_name){
   // Import del layer da eseguire -> Nome nell'header file
-  int layer_number = layer_number.substring(6).toInt();
-  model = tflite::GetModel(layer_number);
+  int layer_id = layer_name.substring(6).toInt();
+  model = tflite::GetModel(static_cast<const void*>(&layer_id));
+  //model = tflite::GetModel(layer_id);
 
   if (model->version() != TFLITE_SCHEMA_VERSION) {
       Serial.print("Model provided is schema version not equal to supported!");
