@@ -5,7 +5,7 @@ from sklearn.model_selection import train_test_split
 import numpy as np 
 
 class ModelBuilder:
-    def __init__(self, image_size=30, num_classes=2, image_paths=[], labels=[], dataset_path=''):
+    def __init__(self, image_size=10, num_classes=2, image_paths=[], labels=[], dataset_path=''):
         self.image_size = image_size
         self.num_classes = num_classes
         self.image_paths = image_paths
@@ -14,8 +14,9 @@ class ModelBuilder:
         self.dataset_path = dataset_path
 
     def build_model(self):
+    
         model = models.Sequential()
-        model.add(layers.Conv2D(32, (3, 3), activation='relu', input_shape=(self.image_size, self.image_size, 3),name="layer_0"))
+        model.add(layers.Conv2D(32, (3, 3), activation='relu', input_shape=(10, 10, 3), name="layer_0"))
         model.add(layers.MaxPooling2D((2, 2), name="layer_1"))
         model.add(layers.Flatten(name="layer_2"))
         model.add(layers.Dense(64, activation='relu', name="layer_3"))

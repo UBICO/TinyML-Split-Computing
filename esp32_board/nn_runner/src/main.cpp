@@ -5,6 +5,7 @@
  */
 #include <WiFi.h>
 #include <PubSubClient.h>
+#define MQTT_MAX_PACKET_SIZE 2*1024 // Important: Adjust size to correctly send and recieve topic messages
 #include <sys/time.h>
 #include <UUID.h>
 #include <ArduinoJson.h>
@@ -20,7 +21,11 @@
 #include "model_layers/layer_2.h"
 #include "model_layers/layer_3.h"
 #include "model_layers/layer_4.h"
-const int MAX_NUM_LAYER = 4;
+const int MAX_NUM_LAYER = 5;
+float imageData[10][10] = {};
+const int imageHeight = 10;
+const int imageWidth  = 10;
+
 /* 
 * ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 * LIBS for TFLITE
@@ -50,7 +55,7 @@ const tflite::Model* model = nullptr;
 tflite::MicroInterpreter* interpreter = nullptr;
 TfLiteTensor* input = nullptr;
 TfLiteTensor* output = nullptr;
-constexpr int kTensorArenaSize = 2*1024;
+constexpr int kTensorArenaSize = 20*1024;
 uint8_t tensor_arena[kTensorArenaSize];
 bool modelLoaded=false;
 const int nonValidLayer = 999;
@@ -61,7 +66,6 @@ int computedLayer = 0;
 struct tm timeinfo;
 UUID uuid;
 String MessageUUID = "";
-DynamicJsonDocument doc(512); 
 int offloadingLayer = nonValidLayer;
 bool offloaded = false;
 
@@ -89,7 +93,6 @@ void loadNNLayer(String layer_name){
   // Import del layer da eseguire -> Nome nell'header file
   int layer_id = layer_name.substring(6).toInt();
   model = tflite::GetModel(static_cast<const void*>(&layer_id));
-  //model = tflite::GetModel(layer_id);
 
   if (model->version() != TFLITE_SCHEMA_VERSION) {
       Serial.print("Model provided is schema version not equal to supported!");
@@ -130,6 +133,14 @@ StaticJsonDocument<512> runNNLayer(int offloading_layer_index) {
       modelLoaded = true;
     }
 
+    // Pass image data to the model
+    for (int i = 0; i < imageHeight; ++i) {
+        for (int j = 0; j < imageWidth; ++j) {
+            input->data.f[i * imageWidth + j] = imageData[i][j];
+        }
+    }
+
+    // Run inference
     input = interpreter->input(0);
     output = interpreter->output(0);
     interpreter->Invoke();
@@ -182,14 +193,14 @@ void mqttConfiguration(){
   client.setServer(MQTT_SRV, MQTT_PORT);
   while (!client.connect("ESP32Client", "", "")) {
     Serial.println("Connecting to MQTT Broker");
-    if (client.connected()) {
-      Serial.println("Connected to MQTT Broker");
-    } else {
+    if (!client.connected()) {
       Serial.print("Failed to connect to MQTT Broker - retrying, rc=");
       Serial.print(client.state());
       delay(500);
     }
   }
+  client.setBufferSize(2*1024); // Important: Adjust size to correctly send and recieve topic messages
+  Serial.println("Connected to MQTT Broker");
 }
 
 /* 
@@ -230,9 +241,36 @@ void timeConfiguration(){
 * GET OFFLOADING INFORMATION
 * ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 */
-void getOffloadingInformation() {
+void getOffloadingInformation(DynamicJsonDocument messageData) {
+  // Access specific fields in the JSON message
+  String nn_layer = messageData["layer"];
+  offloadingLayer = nn_layer.toInt();
+  // Print some values from the parsed JSON message
+  Serial.print("Offloading Layer: "+ String(nn_layer));
+}
+
+/* 
+* ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+* GET MODEL DATA FOR PREDICTION
+* ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+*/
+void getModelDataForPrediction(DynamicJsonDocument messageData) {
+  // Access specific fields in the JSON message
+  String inputData = messageData["input_data"];
+  // Convert the inputData string to a 2D array
+  for (int i = 0; i < imageHeight; ++i) {
+    for (int j = 0; j < imageWidth; ++j) {
+      imageData[i][j] = inputData[i * imageWidth + j] - '0'; // Assuming inputData contains numeric characters
+    }
+  }
+  // Print some values from the parsed JSON message
+  Serial.print("Model input data recieved");
+}
+
+
+void dispatchCallbackMessages(){
   client.subscribe("comunication/edge/nn_offloading");
-  // Listen for incoming messages and store the last received message
+  client.subscribe("comunication/edge/nn_input_data");
   client.setCallback([](char* topic, byte* payload, unsigned int length) {
     // Convert the incoming message to a string
     String message = "";
@@ -240,19 +278,19 @@ void getOffloadingInformation() {
       message += (char)payload[i];
     }
     // Parse the JSON message and store it in the DynamicJsonDocument
+    DynamicJsonDocument doc(2*1024); // Important: Fix size to correctly recieve and store the model input data
     DeserializationError error = deserializeJson(doc, message);
     // Check for parsing errors
     if (error) {
       Serial.println(error.c_str());
       return;
     }
-    // Access specific fields in the JSON message
-    String nn_layer = doc["layer"];
-    offloadingLayer = nn_layer.toInt();
-    // Print some values from the parsed JSON message
-    Serial.print("Offloading Layer: "+ String(nn_layer));
+    Serial.println(topic);
+    if (strcmp(topic, "comunication/edge/nn_offloading") == 0) { getOffloadingInformation(doc);}
+    if (strcmp(topic, "comunication/edge/nn_input_data") == 0) { getModelDataForPrediction(doc);}
   });
 }
+
 
 /*
  * ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -295,7 +333,6 @@ void predictAndOffload(){
     jsonDoc["timestamp"] = getCurrTimeStr();
     jsonDoc["messageUIID"] = MessageUUID;
     jsonDoc["nn_id"] = MODEL_NAME;
-    
 
     // Serialize the JSON document to a string and Publish the JSON message to the topic
     String jsonMessage;
@@ -312,12 +349,12 @@ void predictAndOffload(){
  */
 void setup() {
   Serial.begin(115200);
-  wifiConfiguration();        // Wi-Fi Connection
-  mqttConfiguration();        // MQTT
-  timeConfiguration();        // Synchronize Timer - NTP server
-  generateMessageUUID();      // Generate an Identifier for the message
-  getOffloadingInformation(); // Subscribe to a topic to recieve updates about the offloading
-  publishDeviceAnaytics();    // Publishes to a topic the inference time of each layer on the device
+  wifiConfiguration();          // Wi-Fi Connection
+  mqttConfiguration();          // MQTT
+  timeConfiguration();          // Synchronize Timer - NTP server
+  generateMessageUUID();        // Generate an Identifier for the message
+  dispatchCallbackMessages();   // Menages Callback messages on different topics
+  //publishDeviceAnaytics();      // Publishes to a topic the inference time of each layer on the device
 }
 
 /* 
@@ -326,10 +363,12 @@ void setup() {
  * ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  */
 void loop() {
-  client.loop();          
+  
+  client.loop();  
+  /*        
   predictAndOffload();
   if (offloaded){
     delay(5000);
     ESP.restart();
-  }
+  }*/
 }

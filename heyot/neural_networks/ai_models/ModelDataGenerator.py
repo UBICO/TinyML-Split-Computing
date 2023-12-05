@@ -2,7 +2,7 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
 class ModelDataGenerator:
-    def __init__(self, image_size=40, num_images=2, dataset_path=''):
+    def __init__(self, image_size=10, num_images=2, dataset_path=''):
         self.image_size = image_size
         self.num_images = num_images
         self.images = None

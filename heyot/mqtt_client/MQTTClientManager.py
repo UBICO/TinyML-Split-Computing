@@ -20,7 +20,7 @@ class MQTTClientManager:
 
         # Mqtt Broker Info 
         self.mqtt_client        = None
-        self.MQTT_BROKER        = 'FLOWFACTORY-FABIO'   # Broker Hostname, resolves even without .local when using hotspot
+        self.MQTT_BROKER        = 'FLOWFACTORY-FABIO.local'   # Broker Hostname, resolves even without .local when using hotspot
         self.MQTT_PORT          = 1883                  # MQTT broker port
         self.MQTT_QOS           = 2                     # MQTT QOS Level
 
@@ -30,7 +30,8 @@ class MQTTClientManager:
         ]
 
         self.publish_topic      = [
-            'comunication/edge/nn_offloading',     
+            'comunication/edge/nn_offloading',  
+            'comunication/edge/nn_offloading/data',     
             'comunication/edge/nn_analytics',             
             'comunication/nn_prediction',
         ]
@@ -51,6 +52,23 @@ class MQTTClientManager:
         logger.info(f"MQTT Cli Connected: {rc}")
         for topic in self.subscribe_topics:
             client.subscribe(topic)
+        self.publish_model_input_data()
+
+    def publish_model_input_data(self):
+        raw_file_path = f'./neural_networks/ai_models/models/test_model/pred_data/pred_test_is_0.raw'
+        try:
+            # Read the raw file
+            with open(raw_file_path, 'rb') as file:
+                raw_data = file.read()
+
+            # Convert the raw data to a list of integers
+            input_data = [int(byte) for byte in raw_data]
+
+            # Create and publish the JSON message
+            message = {"input_data": input_data}
+            self.publish_message(topic='comunication/edge/nn_input_data', message=json.dumps(message))
+        except Exception as e:
+            print(f"Error publishing input data: {str(e)}")
 
     def get_message_data(self, msg):
         logger.info(f"Reading Message Data")
@@ -94,9 +112,6 @@ class MQTTClientManager:
 
         logger.info(f"{message_data}")
         if nn_id is not None:
-            # Da rimuovere utilizzo il metodo della classe giusta
-            #self.nn_analytics_path = f'./neural_networks/ai_models/models/{nn_id}/analytics_data/analytics.csv'
-            #analytics_data = pd.read_csv(self.nn_analytics_path)
             msg_latency, avg_speed = self.evaluate_latency_and_speed(message_data, payload_size_bits)
 
             # Create or get the NNManager instance for the neural network
@@ -155,6 +170,8 @@ class MQTTClientManager:
                     algo_id='0.0.0'
                 )
 
+                
+
     def evaluate_latency_and_speed(self, message_data, payload_size_bits):
         # Calculate Latency in seconds and the average_speed
         current_time = time.time_ns() / 1_000_000_000
@@ -174,8 +191,10 @@ class MQTTClientManager:
         self.mqtt_client.on_connect = self.on_connect
         self.mqtt_client.on_message = self.on_message
         self.mqtt_client_running = True
+        # Pass the data for the offloading to the device
         self.mqtt_client.connect(self.MQTT_BROKER, self.MQTT_PORT, keepalive=60)
         self.mqtt_client.loop_forever()
+
 
     def disconnect_mqtt_client(self):
         logger.info(f"MQTT Cli Disconnected")
@@ -201,7 +220,7 @@ class MQTTClientManager:
                 if result.rc == mqtt.MQTT_ERR_SUCCESS:
                     logger.info(f"Published message '{message}' to topic '{topic}' with QoS 2")
                 else:
-                    logger.info(f"Failed to publish message to topic '{topic}'")
+                    logger.info(f"Failed to publish message to topic '{topic}', {result.rc}")
             except Exception as e:
                 logger.info(f"Error publishing message: {e}")
         else:

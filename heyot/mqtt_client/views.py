@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from .MQTTClientManager import MQTTClientManager # Change the import path to the correct one for the class
 import threading
+import json
 from django.http import JsonResponse
 
 
@@ -24,6 +25,7 @@ def start_mqtt_client(request):
 
     # Get connected device count and total message count
     connected_devices_data = mqtt_manager.get_connected_devices_and_message_count()
+
 
     return render(request, 'heyot/mqtt_client_menager/mqtt_client.html', {
         'notification': notification,
