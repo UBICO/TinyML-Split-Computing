@@ -53,7 +53,7 @@ class OffloadingManager:
             edge_computation_costs=0,
         )
         if last_evaluation < self.lowest_evaluation:
-            self.best_layer = 7 
+            self.best_layer = self.num_layers
             self.lowest_evaluation = last_evaluation
 
         logger.info(f"Offloading from: {self.best_layer} layer - {self.lowest_evaluation}")

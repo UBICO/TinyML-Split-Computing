@@ -51,23 +51,25 @@ const int imageWidth  = 10;
 // NN Variables
 tflite::MicroErrorReporter micro_error_reporter;
 tflite::ErrorReporter* error_reporter = &micro_error_reporter;
-const tflite::Model* model = nullptr;
+const tflite::Model* model            = nullptr;
 tflite::MicroInterpreter* interpreter = nullptr;
-TfLiteTensor* input = nullptr;
-TfLiteTensor* output = nullptr;
-constexpr int kTensorArenaSize = 20*1024;
+TfLiteTensor* input                   = nullptr;
+TfLiteTensor* output                  = nullptr;
+constexpr int kTensorArenaSize        = 70*1024;
 uint8_t tensor_arena[kTensorArenaSize];
-bool modelLoaded=false;
-const int nonValidLayer = 999;
+bool modelLoaded                      = false;
 // Communication & Offloading Variables
 WiFiClient espClient;
 PubSubClient client(espClient);
-int computedLayer = 0;
+int computedLayer       = 0;
 struct tm timeinfo;
 UUID uuid;
-String MessageUUID = "";
-int offloadingLayer = nonValidLayer;
-bool offloaded = false;
+String MessageUUID      = "";
+const int nonValidLayer = 999;
+int offloadingLayer     = nonValidLayer;
+bool offloaded          = false;
+bool analyticsPublished = false;
+bool modelDataLoaded    = false;
 
 /*
  * ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -92,19 +94,26 @@ void generateMessageUUID(){
 void loadNNLayer(String layer_name){
   // Import del layer da eseguire -> Nome nell'header file
   int layer_id = layer_name.substring(6).toInt();
-  model = tflite::GetModel(static_cast<const void*>(&layer_id));
+  switch (layer_id) {
+      case 0: model = tflite::GetModel(layer_0); break;
+      case 1: model = tflite::GetModel(layer_1); break;
+      case 2: model = tflite::GetModel(layer_2); break;
+      case 3: model = tflite::GetModel(layer_3); break;
+      case 4: model = tflite::GetModel(layer_4); break;
+  }
 
   if (model->version() != TFLITE_SCHEMA_VERSION) {
-      Serial.print("Model provided is schema version not equal to supported!");
+      Serial.print("Model provided is schema version not equal to supported!\n");
       return;
   } else {
       Serial.print("\nModel Layer Loaded! \n");
+      modelLoaded = true;
   }
   // Questo richiama tutte le implementazioni delle operazioni di cui abbiamo bisogno
   tflite::AllOpsResolver resolver;
   tflite::MicroInterpreter static_interpreter(model, resolver, tensor_arena, kTensorArenaSize, error_reporter);
   interpreter = &static_interpreter;
-  Serial.print("Interprete ok");
+  Serial.print("Interpreter ready");
 
   // Alloco la memoria del tensor_arena per i tensori del modello
   TfLiteStatus allocate_status = interpreter->AllocateTensors();
@@ -128,9 +137,15 @@ StaticJsonDocument<512> runNNLayer(int offloading_layer_index) {
     String layer_name = "layer_" + String(i);
     float inizio = micros();
 
-    if (!modelLoaded){
+    while (!modelLoaded){
+      Serial.println("Loading Model before Inference...");
       loadNNLayer(layer_name);
-      modelLoaded = true;
+      delay(1000);
+    }
+
+    while (!modelDataLoaded){
+      Serial.println("Waiting for input Data for Inference...");
+      delay(1000);
     }
 
     // Pass image data to the model
@@ -265,6 +280,7 @@ void getModelDataForPrediction(DynamicJsonDocument messageData) {
   }
   // Print some values from the parsed JSON message
   Serial.print("Model input data recieved");
+  modelDataLoaded = true;
 }
 
 
@@ -298,19 +314,22 @@ void dispatchCallbackMessages(){
 * ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 */
 void publishDeviceAnaytics(){
- // Generate the JSON message
-  StaticJsonDocument<512> jsonDoc;
-  const int firstRunOffloadingLayer = MAX_NUM_LAYER;
-  jsonDoc = runNNLayer(firstRunOffloadingLayer);
-  jsonDoc["timestamp"] = getCurrTimeStr();
-  jsonDoc["messageUIID"] = MessageUUID;
-  jsonDoc["nn_id"] = MODEL_NAME;
-  // Serialize the JSON document to a string
-  String jsonMessage;
-  serializeJson(jsonDoc, jsonMessage);
-  // Publish the JSON message to the topic
-  client.publish("comunication/device/nn_analytics", jsonMessage.c_str(), 2);
-  Serial.println("Published Device Analytics");
+  if (!analyticsPublished){
+    // Generate the JSON message
+    StaticJsonDocument<512> jsonDoc;
+    const int firstRunOffloadingLayer = MAX_NUM_LAYER;
+    jsonDoc = runNNLayer(firstRunOffloadingLayer);
+    jsonDoc["timestamp"] = getCurrTimeStr();
+    jsonDoc["messageUIID"] = MessageUUID;
+    jsonDoc["nn_id"] = MODEL_NAME;
+    // Serialize the JSON document to a string
+    String jsonMessage;
+    serializeJson(jsonDoc, jsonMessage);
+    // Publish the JSON message to the topic
+    client.publish("comunication/device/nn_analytics", jsonMessage.c_str(), 2);
+    Serial.println("Published Device Analytics");
+    analyticsPublished = true;
+  }
 }
 
 /*
@@ -354,7 +373,7 @@ void setup() {
   timeConfiguration();          // Synchronize Timer - NTP server
   generateMessageUUID();        // Generate an Identifier for the message
   dispatchCallbackMessages();   // Menages Callback messages on different topics
-  //publishDeviceAnaytics();      // Publishes to a topic the inference time of each layer on the device
+  publishDeviceAnaytics();      // Publishes to a topic the inference time of each layer on the device
 }
 
 /* 
