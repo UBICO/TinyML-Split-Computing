@@ -9,7 +9,7 @@ import numpy as np
 from neural_networks.NNManager import NNManager
 from database_manager.DBManager import DBManager
 from offload_monitor.OffloadingManager import OffloadingManager
-
+from django.conf import settings
 import logging
 logger = logging.getLogger(__name__)
 
@@ -20,9 +20,9 @@ class MQTTClientManager:
 
         # Mqtt Broker Info 
         self.mqtt_client        = None
-        self.MQTT_BROKER        = 'FLOWFACTORY-FABIO.local'   # Broker Hostname, resolves even without .local when using hotspot
-        self.MQTT_PORT          = 1883                  # MQTT broker port
-        self.MQTT_QOS           = 2                     # MQTT QOS Level
+        self.MQTT_BROKER        = settings.MQTT_BROKER   # Broker Hostname, resolves even without .local when using hotspot
+        self.MQTT_PORT          = settings.MQTT_PORT     # MQTT broker port
+        self.MQTT_QOS           = settings.MQTT_QOS      # MQTT QOS Level
 
         self.subscribe_topics   = [
             'comunication/device/nn_offloading',
@@ -125,7 +125,8 @@ class MQTTClientManager:
             if msg.topic == "comunication/device/nn_offloading":
                 start_layer_index = int(message_data.get('last_computed_layer'))
                 logger.info(f"Asked to compute from layer: {start_layer_index}")
-                # Predict
+                
+                # FAKE DATA FOR TEST TO REMOVE -----------------------------------------
                 from tensorflow.keras.preprocessing.image import load_img, img_to_array
                 import tensorflow as tf
                 # Load and preprocess the input image for the first layer
@@ -134,8 +135,10 @@ class MQTTClientManager:
                 input_array = tf.expand_dims(input_array, 0)  # Create batch axis
                 input_array = input_array / 255.0  # Normalize pixel values to be between 0 and 1
                 input_array = tf.image.resize(input_array, (10, 10))
-
                 fake_data = input_array
+                # /FAKE DATA FOR TEST TO REMOVE -----------------------------------------
+                
+                # Predic
                 layer_outputs, model_loading_time, update_time = nn_manager.perform_predict(
                     start_layer_index=start_layer_index, data=fake_data)
                 # Publish the prediction of each layer

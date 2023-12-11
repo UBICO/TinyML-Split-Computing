@@ -21,7 +21,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-k*5*5!m^yu695s#qz$k7@2pbd^r=xj!5@l9(6gb66hbqoz03oc'
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -172,3 +172,9 @@ import os
 
 # Set the environment variable to suppress info and warning messages
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # 0: all messages, 1: info messages, 2: error messages, 3: no messages
+
+
+
+MQTT_BROKER        = os.environ.get("MQTT_BROKER")      # Broker Hostname, resolves even without .local when using hotspot
+MQTT_PORT          = int(os.environ.get("MQTT_PORT"))   # MQTT broker port
+MQTT_QOS           = int(os.environ.get("MQTT_QOS"))    # MQTT QOS Level
