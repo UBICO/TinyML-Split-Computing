@@ -254,3 +254,4 @@ class MQTTClientManager:
                 connected_devices_data.append(device_data)
 
         return connected_devices_data
+    

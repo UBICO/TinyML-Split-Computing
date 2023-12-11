@@ -1,0 +1,1 @@
+message_uiid,nn_id,algo_id,avg_speed,avg_latency,chosen_offloading_layer,model_loading_time,update_time,synt_load_edge,synt_latency,offloaded_layer_data_size,layer_zero_data_size,time_saved
