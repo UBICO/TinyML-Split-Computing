@@ -12,3 +12,4 @@ pandas
 Django==3.2.8
 tensorflow
 djangorestframework==3.14.0
+Pillow==10.0.0

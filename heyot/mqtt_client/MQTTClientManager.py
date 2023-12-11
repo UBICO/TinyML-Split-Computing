@@ -119,18 +119,27 @@ class MQTTClientManager:
             if nn_manager is None:
                 nn_manager = NNManager(nn_id=nn_id)
                 self.nn_info_dict[nn_id] = nn_manager
-                analytics_data = nn_manager.get_model_analytics()
+                
 
             # Handle the message based on the topic
             if msg.topic == "comunication/device/nn_offloading":
                 start_layer_index = int(message_data.get('last_computed_layer'))
                 logger.info(f"Asked to compute from layer: {start_layer_index}")
                 # Predict
-                fake_data = np.random.rand(1, 9)
+                from tensorflow.keras.preprocessing.image import load_img, img_to_array
+                import tensorflow as tf
+                # Load and preprocess the input image for the first layer
+                input_image = load_img('./neural_networks/ai_models/models/test_model/pred_data/pred_test_is_1.png', target_size=(10, 10))
+                input_array = img_to_array(input_image)
+                input_array = tf.expand_dims(input_array, 0)  # Create batch axis
+                input_array = input_array / 255.0  # Normalize pixel values to be between 0 and 1
+                input_array = tf.image.resize(input_array, (10, 10))
+
+                fake_data = input_array
                 layer_outputs, model_loading_time, update_time = nn_manager.perform_predict(
                     start_layer_index=start_layer_index, data=fake_data)
                 # Publish the prediction of each layer
-                self.publish_message(topic='comunication/nn_prediction', message=json.dumps(layer_outputs))
+                self.publish_message(topic='comunication/nn_prediction', message=json.dumps(layer_outputs[-1]))
                 # Store Test Information
                 self.db_manager.store_test_data(
                     message_uiid=message_data.get('messageUIID', None),
@@ -147,6 +156,8 @@ class MQTTClientManager:
                 synt_load_edge = 1.7
                 inference_time_edge = [x / synt_load_edge for x in inference_time_device]
                 # Run offloading algorithm
+                analytics_data = nn_manager.get_model_analytics()
+                logger.info(f"{analytics_data}")
                 self.offloading_manager = OffloadingManager(
                     avg_speed=avg_speed,
                     num_layers=len(device_analytics) - 1,
