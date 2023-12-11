@@ -15,7 +15,6 @@
  * NN Modles Layers
  * ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  */
-/*
 #define MODEL_NAME "test_model"
 #include "model_layers/layer_0.h"
 #include "model_layers/layer_1.h"
@@ -23,11 +22,18 @@
 #include "model_layers/layer_3.h"
 #include "model_layers/layer_4.h"
 const int MAX_NUM_LAYER = 5;
-*/
-const int MAX_NUM_LAYER = 5;
-#define MODEL_NAME "test_model"
-#include "model/test_model.h"
-float imageData[10][10] = {};
+float imageData[10][10] = {
+    {255, 255, 255, 255, 255, 255, 255, 255, 255, 255},
+    {255, 255, 255, 255, 255, 255, 255, 255, 255, 255},
+    {255, 255, 0, 0, 0, 255, 255, 255, 255, 255},
+    {255, 255, 0, 0, 255, 0, 0, 255, 255, 255},
+    {255, 255, 0, 0, 255, 0, 0, 255, 255, 255},
+    {255, 255, 0, 0, 255, 255, 255, 255, 255, 255},
+    {255, 255, 255, 255, 255, 0, 0, 255, 255, 255},
+    {255, 255, 0, 0, 255, 0, 0, 255, 255, 255},
+    {255, 255, 0, 0, 255, 0, 0, 255, 255, 255},
+    {255, 255, 255, 255, 255, 255, 255, 255, 255, 255}
+};
 const int imageHeight = 10;
 const int imageWidth  = 10;
 
@@ -56,11 +62,11 @@ const int imageWidth  = 10;
 // NN Variables
 tflite::MicroErrorReporter micro_error_reporter;
 tflite::ErrorReporter* error_reporter = &micro_error_reporter;
-const tflite::Model* model            = nullptr;
+const tflite::Model* model = nullptr;
 tflite::MicroInterpreter* interpreter = nullptr;
-TfLiteTensor* input                   = nullptr;
-TfLiteTensor* output                  = nullptr;
-constexpr int kTensorArenaSize        = 70*1024;
+TfLiteTensor* input;
+TfLiteTensor* output;
+constexpr int kTensorArenaSize        = 12*1024;
 uint8_t tensor_arena[kTensorArenaSize];
 bool modelLoaded                      = false;
 // Communication & Offloading Variables
@@ -74,8 +80,8 @@ const int nonValidLayer = 999;
 int offloadingLayer     = nonValidLayer;
 bool offloaded          = false;
 bool analyticsPublished = false;
-bool modelDataLoaded    = false;
-StaticJsonDocument<256> jsonDoc;
+bool modelDataLoaded    = true;
+StaticJsonDocument<512> jsonDoc;
 
 /*
  * ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -97,29 +103,32 @@ void generateMessageUUID(){
 * LOAD NN LAYER
 * ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 */
-void loadModel(){
-  // Import del layer da eseguire -> Nome nell'header file
-  model = tflite::GetModel(test_model);
+void loadNNLayer(String layer_name){
+  // Import del modello da testare -> Nome nell'header file
+  if(layer_name.equals("layer_0"))model = tflite::GetModel(layer_0);
+  if(layer_name.equals("layer_1"))model = tflite::GetModel(layer_1);
+  if(layer_name.equals("layer_2"))model = tflite::GetModel(layer_2);
+  if(layer_name.equals("layer_3"))model = tflite::GetModel(layer_3);
+  if(layer_name.equals("layer_4"))model = tflite::GetModel(layer_4);
 
   if (model->version() != TFLITE_SCHEMA_VERSION) {
       Serial.println("Model provided is schema version not equal to supported!");
       return;
   } else {
       Serial.println("Model Layer Loaded!");
-      modelLoaded = true;
   }
   // Questo richiama tutte le implementazioni delle operazioni di cui abbiamo bisogno
   tflite::AllOpsResolver resolver;
   tflite::MicroInterpreter static_interpreter(model, resolver, tensor_arena, kTensorArenaSize, error_reporter);
   interpreter = &static_interpreter;
-  Serial.println("Interpreter ready");
+  Serial.print("Interprete ok");
 
   // Alloco la memoria del tensor_arena per i tensori del modello
   TfLiteStatus allocate_status = interpreter->AllocateTensors();
   if (allocate_status != kTfLiteOk) {
       Serial.println("AllocateTensors() failed");
       return;
-  } else {Serial.println("AllocateTensors() done\n");}
+  } else {Serial.println("AllocateTensors() done");}
 }
 
 /* 
@@ -127,32 +136,21 @@ void loadModel(){
 * INFERENCE FOR NN LAYER
 * ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 */
-void runNNLayer(int offloading_layer_index) {
+void runNNLayer(int offloading_layer_index){
   // Generate the JSON message
-  float output_data;
-  // Perform inference layer-by-layer
-  for (int layer_index = 0; layer_index < offloading_layer_index; ++layer_index) {
-    // Perform inference
+  for (int i = 0; i < offloading_layer_index; i++){
+    String layer_name = "layer_" + String(i);
     float inizio = micros();
-    interpreter->Invoke();
-    jsonDoc["layer_inference_time"][layer_index] = (micros() - inizio);
-    Serial.println("Computed layer: " + String(layer_index) + " Inf Time: " + String(micros() - inizio));
-    
-    // Get output data for the current layer
-    // Assuming a 2D output tensor for simplicity
-    /*
-    for (int i = 0; i < output->dims->data[1]; ++i) {
-        for (int j = 0; j < output->dims->data[2]; ++j) {
-            output_data = output->data.f[i * output->dims->data[2] + j];
-            input->data.f[i * input->dims->data[2] + j] = output_data;
-        }
-    }*/
-    jsonDoc["last_layer_output"] = output_data;
+    loadNNLayer(layer_name);
+    /*input = interpreter->input(0);
+    output = interpreter->output(0);
+    interpreter->Invoke();*/
+    jsonDoc["layer_inference_time"][i] = (micros()-inizio);
+    jsonDoc["layer_output"][i] = "";
+    Serial.println("Computed layer: " + String(i)+" Inf Time: " + String(micros()-inizio) );
   }
-
-  // Now, you can find the last layer output outside the loop
-  jsonDoc["last_layer_output"] = "";//outputArray[outputArray.size() - 1];
 }
+
 
 /* 
 * ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -320,7 +318,7 @@ void predictAndOffload(){
     String jsonMessage;
     serializeJson(jsonDoc, jsonMessage);
     client.publish("comunication/device/nn_offloading", jsonMessage.c_str(), 2);
-    Serial.println("\nPerformed Offloading from layer: " + String(offloadingLayer));
+    Serial.println("Performed Offloading from layer: " + String(offloadingLayer));
 }
 
 /* 
@@ -335,7 +333,6 @@ void setup() {
   timeConfiguration();          // Synchronize Timer - NTP server
   generateMessageUUID();        // Generate an Identifier for the message
   dispatchCallbackMessages();
-  loadModel();
 }
 
 /* 
