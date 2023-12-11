@@ -127,15 +127,7 @@ class MQTTClientManager:
                 logger.info(f"Asked to compute from layer: {start_layer_index}")
                 
                 # FAKE DATA FOR TEST TO REMOVE -----------------------------------------
-                from tensorflow.keras.preprocessing.image import load_img, img_to_array
-                import tensorflow as tf
-                # Load and preprocess the input image for the first layer
-                input_image = load_img('./neural_networks/ai_models/models/test_model/pred_data/pred_test_is_1.png', target_size=(10, 10))
-                input_array = img_to_array(input_image)
-                input_array = tf.expand_dims(input_array, 0)  # Create batch axis
-                input_array = input_array / 255.0  # Normalize pixel values to be between 0 and 1
-                input_array = tf.image.resize(input_array, (10, 10))
-                fake_data = input_array
+                fake_data = nn_manager.make_fake_data()
                 # /FAKE DATA FOR TEST TO REMOVE -----------------------------------------
                 
                 # Predic

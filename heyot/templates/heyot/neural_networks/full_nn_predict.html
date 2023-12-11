@@ -17,19 +17,7 @@
     <div class="container row" id="mqtt-form-container">
         <div class="col-md-3">
             <!-- Add a link to call the 'test' view with a specific 'nn_id' -->
-            <a href="{% url 'test' nn_id='01' %}" class="btn btn-primary" target="_blank">Run Neural Network 01</a>
-        </div>
-        <div class="col-md-3">
-            <!-- Add a link to call the 'test' view with another 'nn_id' -->
-            <a href="{% url 'test' nn_id='02' %}" class="btn btn-primary" target="_blank">Run  Neural Network 02</a>
-        </div>
-        <div class="col-md-3">
-            <!-- Add a link to call the 'test' view with another 'nn_id' -->
-            <a href="{% url 'test' nn_id='03' %}" class="btn btn-primary" target="_blank">Run  Neural Network 03 </a>
-        </div>
-        <div class="col-md-3">
-            <!-- Add a link to call the 'test' view with another 'nn_id' -->
-            <a href="{% url 'test' nn_id='04' %}" class="btn btn-primary" target="_blank">Run  Neural Network 04</a>
+            <a href="{% url 'test' nn_id='test_model' %}" class="btn btn-primary" target="_blank">Run Neural Network</a>
         </div>
     </div>
     <div id="notification">

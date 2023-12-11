@@ -2,6 +2,8 @@ import tensorflow as tf
 import time
 import pandas as pd
 import logging
+import tensorflow as tf
+from tensorflow.keras.preprocessing.image import load_img, img_to_array
 
 logger = logging.getLogger(__name__)
 
@@ -87,3 +89,11 @@ class NNManager:
         self.analytics_data = pd.read_csv(self.nn_analytics_path)
         return self.analytics_data 
     
+    def make_fake_data(self):
+        # Load and preprocess the input image for the first layer
+        input_image = load_img(f'./neural_networks/ai_models/models/{self.nn_id}/pred_data/pred_test_is_1.png', target_size=(10, 10))
+        input_array = img_to_array(input_image)
+        input_array = tf.expand_dims(input_array, 0)  # Create batch axis
+        input_array = input_array / 255.0  # Normalize pixel values to be between 0 and 1
+        input_array = tf.image.resize(input_array, (10, 10))
+        return input_array
