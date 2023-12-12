@@ -37,7 +37,7 @@ class MQTTClientManager:
         ]
         
         # Timer Syncronization
-        self.NTP_SERVER         = "0.it.pool.ntp.org"   # NTP Server Name, should be the same used on the esp32 board
+        self.NTP_SERVER         = settings.NTP_SERVER   # NTP Server Name, should be the same used on the esp32 board
         self.start_time         = None
         self.time_offset        = None
 
@@ -52,7 +52,7 @@ class MQTTClientManager:
         logger.info(f"MQTT Cli Connected: {rc}")
         for topic in self.subscribe_topics:
             client.subscribe(topic)
-        # self.publish_model_input_data()
+        #self.publish_model_input_data()
 
     def publish_model_input_data(self):
         raw_file_path = f'./neural_networks/ai_models/models/test_model/pred_data/pred_test_is_0.raw'
@@ -130,14 +130,15 @@ class MQTTClientManager:
                 # The above code is declaring a variable named "model_input_data".
                 model_input_data = layers_output_data["layer_output"].tolist()
 
-
                 if model_input_data[-1] == '':
                     model_input_data = nn_manager.make_fake_data()
+                else:
+                    model_input_data = [model_input_data]
                 logger.info(f"Layer layer Output: {model_input_data}")
                 
                 # Predic
                 layer_outputs, model_loading_time, update_time = nn_manager.perform_predict(
-                    start_layer_index=start_layer_index, data=model_input_data)
+                    start_layer_index=start_layer_index + 1, data=model_input_data)
                 # Publish the prediction of each layer
                 self.publish_message(topic='comunication/nn_prediction', message=json.dumps(layer_outputs[-1]))
                 # Store Test Information

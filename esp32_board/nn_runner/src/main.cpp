@@ -34,6 +34,12 @@ float imageData[10][10] = {
     {255, 255, 0, 0, 255, 0, 0, 255, 255, 255},
     {255, 255, 255, 255, 255, 255, 255, 255, 255, 255}
 };
+/*
+{0, 0, 255, 0, 0},
+ {0, 0, 255, 0, 0},
+ {0, 0, 255, 0, 0},
+   {0, 0, 255, 0, 0}, 
+   {0, 0, 255, 0, 0}*/
 const int imageHeight = 10;
 const int imageWidth  = 10;
 
@@ -60,28 +66,32 @@ const int imageWidth  = 10;
 * ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 */
 // NN Variables
-tflite::MicroErrorReporter micro_error_reporter;
-tflite::ErrorReporter* error_reporter = &micro_error_reporter;
-const tflite::Model* model = nullptr;
-tflite::MicroInterpreter* interpreter = nullptr;
-TfLiteTensor* input;
-TfLiteTensor* output;
-constexpr int kTensorArenaSize        = 12*1024;
-uint8_t tensor_arena[kTensorArenaSize];
-bool modelLoaded                      = false;
+tflite::MicroErrorReporter  micro_error_reporter;
+tflite::ErrorReporter*      error_reporter = &micro_error_reporter;
+const tflite::Model*        model = nullptr;
+tflite::MicroInterpreter*   interpreter = nullptr;
+TfLiteTensor*               input;
+TfLiteTensor*               output;
+constexpr int               kTensorArenaSize        = 12*1024;
+uint8_t                     tensor_arena[kTensorArenaSize];
+bool                        modelLoaded                      = false;
 // Communication & Offloading Variables
-WiFiClient espClient;
-PubSubClient client(espClient);
-int computedLayer       = 0;
-struct tm timeinfo;
-UUID uuid;
-String MessageUUID      = "";
-const int nonValidLayer = 999;
-int offloadingLayer     = nonValidLayer;
-bool offloaded          = false;
-bool analyticsPublished = false;
-bool modelDataLoaded    = true;
+WiFiClient                  espClient;
+PubSubClient                client(espClient);
+int                         computedLayer       = 0;
+struct tm                   timeinfo;
+UUID                        uuid;
+String                      MessageUUID      = "";
+const int                   nonValidLayer = 999;
+int                         offloadingLayer     = nonValidLayer;
+bool                        offloaded          = false;
+bool                        analyticsPublished = false;
+bool                        modelDataLoaded    = true;
 StaticJsonDocument<512> jsonDoc;
+
+
+ 
+ 
 
 /*
  * ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -136,17 +146,31 @@ void loadNNLayer(String layer_name){
 * INFERENCE FOR NN LAYER
 * ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 */
-void runNNLayer(int offloading_layer_index){
+extern "C" void runNNLayer(int offloading_layer_index){
   // Generate the JSON message
+ 
   for (int i = 0; i < offloading_layer_index; i++){
     String layer_name = "layer_" + String(i);
     float inizio = micros();
     loadNNLayer(layer_name);
-    /*input = interpreter->input(0);
+    input = interpreter->input(0);
     output = interpreter->output(0);
-    interpreter->Invoke();*/
+    interpreter->Invoke();
     jsonDoc["layer_inference_time"][i] = (micros()-inizio);
+    
+    
+    // Extract relevant information from the output tensor
+    TfLiteTensor* outputTensor = output;
+    float* outputData = outputTensor->data.f;
+    int numOutput = outputTensor->dims->data[1];
+    
+    // Store output values in a C++ array
+    /*String outputArray[numOutput - 1];
+    for (int j = 0; j < numOutput; j++) {
+      jsonDoc["layer_output"].add(String(outputData[j]));
+    }*/
     jsonDoc["layer_output"][i] = "";
+
     Serial.println("Computed layer: " + String(i)+" Inf Time: " + String(micros()-inizio) );
   }
 }

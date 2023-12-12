@@ -173,7 +173,7 @@ import os
 # Set the environment variable to suppress info and warning messages
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # 0: all messages, 1: info messages, 2: error messages, 3: no messages
 
-
+NTP_SERVER =  os.environ.get("NTP_SERVER")    
 
 MQTT_BROKER        = os.environ.get("MQTT_BROKER")      # Broker Hostname, resolves even without .local when using hotspot
 MQTT_PORT          = int(os.environ.get("MQTT_PORT"))   # MQTT broker port

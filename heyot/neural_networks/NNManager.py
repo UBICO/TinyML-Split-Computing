@@ -56,6 +56,7 @@ class NNManager:
     def predic_single_layer(self, layer_id, layer_data):
         layer =  self.model.layers[layer_id] 
         input_data = self.set_input_data(layer_input_shape=layer.input_shape[1:], layer_data=layer_data)
+
         # Create an intermediate model with the current layer
         intermediate_model = tf.keras.Model(inputs= self.model.input, outputs=layer.output)
         # Predict using the current layer keeps track of the time it takes
@@ -63,7 +64,7 @@ class NNManager:
         try:
             layer_output = intermediate_model.predict(input_data)
         except Exception as e:
-            logger.error(f"Can't Predict Layer: {layer_id}")
+            logger.error(f"Can't Predict Layer: {layer_id}, {e}")
         end_predict = time.time_ns() / 1_000_000_000
         single_layer_predict_time = (end_predict - start_predict)
         # Updates the analytics of the model with the new inference time
