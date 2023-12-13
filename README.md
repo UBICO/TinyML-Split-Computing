@@ -1,20 +1,29 @@
 # HEYoT Neural Network Offloading Example
-What about an Offloading Algorithm and some Split Computing?
 
-# Configurations
-After giving us a star: You can download the repo and then start to configure all the infrastracture...
+Explore the power of Offloading Algorithms and Split Computing with the HEYoT Neural Network Offloading Example.
 
-Within the folder "environment" you can find the ".env.dev" file. This file sets the variables for the MQTT Client running on the Edge and other parameters for the DJango Web App.
+## Configurations
 
-Another important file that needs to be configured is contained in the folder "esp32_board/nn_runner/src" and it's the "conf.h" file. This file contains the configurations of: WiFi, MQTT and NTP server for the device and the edge.
+Thank you for considering our project! To get started, follow these steps:
 
+1. **Star the Repo:**
+   Please show your support by giving our repository a star.
 
-# The Neural Network Model
-Inside the folder "heyot/neyral_networks/ai_models" you can find all the utils used for  examples of nn model generation and conversion.
-The jupyter notebook "ConvertModel" can give you an idea on how to obtain a single header file for each layer of your neural network model - these header files are key components of the code that then runs on the ESP32 devices.
+2. **Download and Configure:**
+   Clone or download the repository, then proceed with the configuration of the infrastructure.
 
+   - **MQTT Client and Django Web App:**
+     Navigate to the "environment" folder and configure the ".env.dev" file. This file manages variables for the MQTT Client running on the Edge and other parameters for the Django Web App.
 
-Each model that you wat to run should be put in the models subdirectory with this structure:
+   - **ESP32 Board Configuration:**
+     Find the "conf.h" file inside the "esp32_board/nn_runner/src" folder. This file contains configurations for WiFi, MQTT, and NTP server for both the device and the edge.
+
+## The Neural Network Model
+
+In the "heyot/neural_networks/ai_models" folder, you'll discover utilities for generating and converting neural network models. The Jupyter notebook "ConvertModel" provides insights into obtaining a single header file for each layer of your neural network model. These header files are crucial components of the code that runs on ESP32 devices.
+
+Ensure that each model you want to run follows this directory structure:
+
 <model_name>/
     analytics_data/
         analytics.csv
@@ -30,3 +39,7 @@ Each model that you wat to run should be put in the models subdirectory with thi
     <model_name>.tflite
 
 
+## Enjoy
+Feel free to explore and experiment with different models within the designated "models" subdirectory.
+
+Your contributions and feedback are highly appreciated. Happy coding!
